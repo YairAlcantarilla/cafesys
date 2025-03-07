@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="menu">
+    <file>Menú extenso.png</file>
+  </qresource>
+</RCC>
