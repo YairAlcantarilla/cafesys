@@ -9,7 +9,7 @@ from PyQt6.QtCore import Qt
 class LoginWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("CAFESY - Login")
+        self.setWindowTitle("CAFESYS - Login")
         self.setFixedSize(320, 420)
         self.setStyleSheet("background-color: #0D1321;")
 
