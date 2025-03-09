@@ -1,4 +1,5 @@
 import p_producto
+import main_p
 import sys
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
@@ -62,7 +63,7 @@ class MainWindow(QMainWindow):
     def button_clicked(self):
         button = self.sender()
         if button.text() == "Productos":
-            self.main_window = p_producto.MainWindow()
+            self.main_window = main_p.MainPWindow()
             self.main_window.show()
             self.close()
 if __name__ == "__main__":
