@@ -1,6 +1,7 @@
 import p_producto
 import p_inicio
 import p_combo
+import p_desc
 import sys
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
@@ -54,10 +55,10 @@ class MainPWindow(QMainWindow):
                     color: transparent;
             }
             QPushButton:hover {
-                background-color: rgba(255, 255, 255, 40);
+                background-color: rgba(255, 255, 255, 0);
             }
             QPushButton:pressed {
-                background-color: rgba(255, 255, 255, 60);
+                background-color: rgba(230, 170, 104, 80);
             }
         """)
 
@@ -78,6 +79,10 @@ class MainPWindow(QMainWindow):
             self.close()
         elif button.text() == "Scombo":
             self.main_window = p_combo.MainCombo()  
+            self.main_window.show()
+            self.close()
+        elif button.text() == "Sdesc":
+            self.main_window = p_desc.MainDesc()  
             self.main_window.show()
             self.close()
 if __name__ == "__main__":

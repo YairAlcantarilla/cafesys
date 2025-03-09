@@ -48,10 +48,10 @@ class MainWindow(QMainWindow):
                     color: transparent;
             }
             QPushButton:hover {
-                background-color: rgba(255, 255, 255, 40);
+                background-color: rgba(255, 255, 255, 0);
             }
             QPushButton:pressed {
-                background-color: rgba(255, 255, 255, 60);
+                background-color: rgba(230, 170, 104, 80);
             }
         """)
 

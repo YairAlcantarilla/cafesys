@@ -54,14 +54,14 @@ class MainWindow(QMainWindow):
                     border: 0px solid white;
                     border-radius: 10px;
                     color: transparent;
-                }
-                QPushButton:hover {
-                    background-color: rgba(255, 255, 255, 40);
-                }
-                QPushButton:pressed {
-                    background-color: rgba(255, 255, 255, 60);
-                }
-            """)
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0);
+            }
+            QPushButton:pressed {
+                background-color: rgba(230, 170, 104, 80);
+            }
+        """)
             self.buttons.append(button)
         
         for button in self.buttons:
@@ -125,10 +125,12 @@ class AgregarProducto(QMainWindow):
             input_field.move(x, y)
             input_field.setStyleSheet("""
                 QLineEdit {
-                    border: 2px solid gray;
+                    border: 1px solid #E6AA68;
                     border-radius: 10px;
                     padding: 5px;
                     font-size: 14px;
+                    background-color: #111A2D;
+                    color: #E6AA68;
                 }
             """)
             self.inputs.append(input_field)
@@ -149,14 +151,14 @@ class AgregarProducto(QMainWindow):
                     border: 0px solid white;
                     border-radius: 10px;
                     color: transparent;
-                }
-                QPushButton:hover {
-                    background-color: rgba(255, 255, 255, 40);
-                }
-                QPushButton:pressed {
-                    background-color: rgba(255, 255, 255, 60);
-                }
-            """)
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0);
+            }
+            QPushButton:pressed {
+                background-color: rgba(230, 170, 104, 80);
+            }
+        """)
             self.buttons.append(button)
         for button in self.buttons:
             button.clicked.connect(self.button_clicked)
@@ -199,10 +201,12 @@ class EliminarProducto(QMainWindow):
             input_field.move(x, y)
             input_field.setStyleSheet("""
                 QLineEdit {
-                    border: 2px solid gray;
+                    border: 1px solid #E6AA68;
                     border-radius: 10px;
                     padding: 5px;
                     font-size: 14px;
+                    background-color: #111A2D;
+                    color: #E6AA68;
                 }
             """)
             self.inputs.append(input_field)
@@ -222,14 +226,14 @@ class EliminarProducto(QMainWindow):
                     border: 0px solid white;
                     border-radius: 10px;
                     color: transparent;
-                }
-                QPushButton:hover {
-                    background-color: rgba(255, 255, 255, 40);
-                }
-                QPushButton:pressed {
-                    background-color: rgba(255, 255, 255, 60);
-                }
-            """)
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0);
+            }
+            QPushButton:pressed {
+                background-color: rgba(230, 170, 104, 80);
+            }
+        """)
             self.buttons.append(button)
         for button in self.buttons:
             button.clicked.connect(self.button_clicked)
@@ -274,14 +278,14 @@ class EditarProducto(QMainWindow):
                     border: 0px solid white;
                     border-radius: 10px;
                     color: transparent;
-                }
-                QPushButton:hover {
-                    background-color: rgba(255, 255, 255, 40);
-                }
-                QPushButton:pressed {
-                    background-color: rgba(255, 255, 255, 60);
-                }
-            """)
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0);
+            }
+            QPushButton:pressed {
+                background-color: rgba(230, 170, 104, 80);
+            }
+        """)
             self.buttons.append(button)
         for button in self.buttons:
             button.clicked.connect(self.button_clicked)
@@ -324,14 +328,14 @@ class ListaProducto(QMainWindow):
                     border: 0px solid white;
                     border-radius: 10px;
                     color: transparent;
-                }
-                QPushButton:hover {
-                    background-color: rgba(255, 255, 255, 40);
-                }
-                QPushButton:pressed {
-                    background-color: rgba(255, 255, 255, 60);
-                }
-            """)
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0);
+            }
+            QPushButton:pressed {
+                background-color: rgba(230, 170, 104, 80);
+            }
+        """)
             self.buttons.append(button)
         for button in self.buttons:
             button.clicked.connect(self.button_clicked)
