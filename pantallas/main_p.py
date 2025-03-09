@@ -1,5 +1,6 @@
 import p_producto
 import p_inicio
+import p_combo
 import sys
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
@@ -75,7 +76,10 @@ class MainPWindow(QMainWindow):
             self.main_window = p_inicio.MainWindow()  
             self.main_window.show()
             self.close()
-        
+        elif button.text() == "Scombo":
+            self.main_window = p_combo.MainCombo()  
+            self.main_window.show()
+            self.close()
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainPWindow()

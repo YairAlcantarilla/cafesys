@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
 
-        # aca van los botones w
+        # aca van los botones 
         # para ajustar es cord x, cord y, y ancho y alto
         button_configs = [
             ["Caja", 30, 152, 200, 50],
@@ -341,6 +341,7 @@ class ListaProducto(QMainWindow):
             self.main_window = MainWindow()  
             self.main_window.show()
             self.close() 
+#############################################################################
 
 
 if __name__ == "__main__":
