@@ -1,4 +1,5 @@
 import p_producto
+import Caja
 import main_p
 import sys
 from PyQt6.QtCore import Qt
@@ -66,6 +67,13 @@ class MainWindow(QMainWindow):
             self.main_window = main_p.MainPWindow()
             self.main_window.show()
             self.close()
+        if button.text() == "Caja":
+            self.main_window = Caja.MainCaja()
+            self.main_window.show()
+            self.close()
+    
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
