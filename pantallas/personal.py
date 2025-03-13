@@ -66,14 +66,10 @@ class MainPersonal(QMainWindow):
             self.cambioP = AgregarE()
         elif button.text() == "EliminarE":
             self.cambioP = EliminarE()
-        elif button.text() == "Editar":
-            self.main_window = EditarProducto()
-            self.main_window.show()
-            self.close()
+        elif button.text() == "EditarE":
+            self.cambioP = EditarE()
         elif button.text() == "ListaE":
-            self.main_window = ListaProducto()
-            self.main_window.show()
-            self.close()
+            self.cambioP = ListaE()
         elif button.text() == "RegresarE":
             self.cambioP = p_inicio.MainWindow()  
 
@@ -216,9 +212,9 @@ class EliminarE(QMainWindow):
 
         #**************************************************************
         input_configs = [
-            ["Ingrese ID", 598, 194, 317, 40, False],  # ID (Editable)
-            ["", 598, 284, 317, 40, True],  # Nombre (Solo lectura)
-            ["", 598, 369, 317, 40, True],  # Ocupación (Solo lectura)
+            ["Ingrese ID", 598, 194, 317, 40, False], 
+            ["", 598, 284, 317, 40, True],  
+            ["", 598, 369, 317, 40, True],  
         ]
 
         # 🔹 Lista para almacenar los QLineEdit
@@ -309,9 +305,151 @@ class EliminarE(QMainWindow):
         self.new_animation.setEndValue(1.0)  
         self.new_animation.start()
         self.close()
-    #***********************************************************************************
+   
 
-#################################### Interfaz para eliminar empleado #######################################################
+#################################### Interfaz para Editar empleado #######################################################
+class EditarE(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Editar usuario")
+        self.setFixedSize(1366, 768)
+
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+        background_label = QLabel(central_widget)
+        pixmap = QPixmap('imagenes/EDpersonal .png')
+        background_label.setPixmap(pixmap)
+        background_label.setScaledContents(True)
+        central_layout = QVBoxLayout(central_widget)
+        central_layout.addWidget(background_label)
+    #**********************************************************************
+        button_configs = [
+            ["Regresar", 1270, 655, 77, 70],
+            
+        ]
+
+        self.buttons = []
+        for name, x, y, width, height in button_configs:
+            button = QPushButton(name, self)
+            button.setFixedSize(width, height)
+            button.move(x, y)
+            button.setStyleSheet("""
+                QPushButton {
+                    background-color: rgba(255, 255, 255, 0);
+                    border: 0px solid white;
+                    border-radius: 10px;
+                    color: transparent;
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0);
+            }
+            QPushButton:pressed {
+                background-color: rgba(230, 170, 104, 80);
+            }
+        """)
+            self.buttons.append(button)
+        
+        for button in self.buttons:
+            button.clicked.connect(self.button_clicked)
+
+    def button_clicked(self):
+        button = self.sender()
+        if button.text() == "Regresar":
+            self.cambioP = MainPersonal()
+
+        self.fade_out()  
+        
+    def fade_out(self):
+        self.animation = QPropertyAnimation(self, b"windowOpacity")
+        self.animation.setDuration(150) 
+        self.animation.setStartValue(1.0)  
+        self.animation.setEndValue(0.0)  
+        self.animation.finished.connect(self.open_new_window) 
+        self.animation.start()
+
+    def open_new_window(self):
+        self.cambioP.setWindowOpacity(0.0)  
+        self.cambioP.show()
+        self.new_animation = QPropertyAnimation(self.cambioP, b"windowOpacity")
+        self.new_animation.setDuration(150)  
+        self.new_animation.setStartValue(0.0)  
+        self.new_animation.setEndValue(1.0)  
+        self.new_animation.start()
+        self.close()
+
+ #################################### Interfaz para ver lista empleado #######################################################
+class ListaE(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Editar usuario")
+        self.setFixedSize(1366, 768)
+
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+        background_label = QLabel(central_widget)
+        pixmap = QPixmap('imagenes/Lpersonal.png')
+        background_label.setPixmap(pixmap)
+        background_label.setScaledContents(True)
+        central_layout = QVBoxLayout(central_widget)
+        central_layout.addWidget(background_label)
+    #**********************************************************************
+        button_configs = [
+            ["Regresar", 1270, 655, 77, 70],
+            
+        ]
+
+        self.buttons = []
+        for name, x, y, width, height in button_configs:
+            button = QPushButton(name, self)
+            button.setFixedSize(width, height)
+            button.move(x, y)
+            button.setStyleSheet("""
+                QPushButton {
+                    background-color: rgba(255, 255, 255, 0);
+                    border: 0px solid white;
+                    border-radius: 10px;
+                    color: transparent;
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0);
+            }
+            QPushButton:pressed {
+                background-color: rgba(230, 170, 104, 80);
+            }
+        """)
+            self.buttons.append(button)
+        
+        for button in self.buttons:
+            button.clicked.connect(self.button_clicked)
+
+    def button_clicked(self):
+        button = self.sender()
+        if button.text() == "Regresar":
+            self.cambioP = MainPersonal()
+
+        self.fade_out()  
+        
+    def fade_out(self):
+        self.animation = QPropertyAnimation(self, b"windowOpacity")
+        self.animation.setDuration(150) 
+        self.animation.setStartValue(1.0)  
+        self.animation.setEndValue(0.0)  
+        self.animation.finished.connect(self.open_new_window) 
+        self.animation.start()
+
+    def open_new_window(self):
+        self.cambioP.setWindowOpacity(0.0)  
+        self.cambioP.show()
+        self.new_animation = QPropertyAnimation(self.cambioP, b"windowOpacity")
+        self.new_animation.setDuration(150)  
+        self.new_animation.setStartValue(0.0)  
+        self.new_animation.setEndValue(1.0)  
+        self.new_animation.start()
+        self.close()
+
+#################################### Interfaz para ver lista empleado #######################################################
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
