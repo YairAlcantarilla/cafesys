@@ -1,10 +1,11 @@
 import sys
 import os
 import p_inicio
-
+import Caja
 from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QMessageBox
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
+#*******************************************************************************************************************************#
 
 class LoginWindow(QWidget):
     def __init__(self):
@@ -63,6 +64,10 @@ class LoginWindow(QWidget):
 
         if usuario == "admin" and contraseña == "1234":
             self.main_window = p_inicio.MainWindow()
+            self.main_window.show()
+            self.close()
+        elif usuario == "aaa" and contraseña == "1234":
+            self.main_window = Caja.MainCaja()
             self.main_window.show()
             self.close()
         else:

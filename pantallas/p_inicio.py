@@ -1,10 +1,12 @@
 import p_producto
 import Caja
+import personal
 import main_p
 import sys
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -24,8 +26,6 @@ class MainWindow(QMainWindow):
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
 
-        # aca van los botones w
-        # para ajustar es cord x, cord y, y ancho y alto
         button_configs = [
             ["Caja", 30, 152, 200, 50],
             ["Reportes", 30, 227, 200, 50],
@@ -67,11 +67,15 @@ class MainWindow(QMainWindow):
             self.main_window = main_p.MainPWindow()
             self.main_window.show()
             self.close()
-        if button.text() == "Caja":
+        elif button.text() == "Caja":
             self.main_window = Caja.MainCaja()
             self.main_window.show()
             self.close()
-    
+        elif button.text() == "Personal":
+            self.main_window = personal.MainPersonal()
+            self.main_window.show()
+            self.close()
+
 
 
 if __name__ == "__main__":

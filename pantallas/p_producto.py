@@ -24,8 +24,6 @@ class MainWindow(QMainWindow):
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
 
-        # aca van los botones 
-        # para ajustar es cord x, cord y, y ancho y alto
         button_configs = [
             ["Caja", 30, 152, 200, 50],
             ["Reportes", 30, 227, 200, 50],
@@ -100,14 +98,14 @@ class AgregarProducto(QMainWindow):
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
 
-        # fondo agregar
+        
         background_label = QLabel(central_widget)
         pixmap = QPixmap('imagenes/agregarpr.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
-        #casillas
+        
         input_configs = [
             [".", 598, 194, 317, 40],
             [".", 598, 284, 317, 40],
@@ -120,7 +118,7 @@ class AgregarProducto(QMainWindow):
         self.inputs = []
         for placeholder, x, y, width, height in input_configs:
             input_field = QLineEdit(self)
-            input_field.setPlaceholderText(placeholder)  # Texto de referencia dentro del campo
+            input_field.setPlaceholderText(placeholder)  
             input_field.setFixedSize(width, height)
             input_field.move(x, y)
             input_field.setStyleSheet("""
@@ -135,7 +133,7 @@ class AgregarProducto(QMainWindow):
             """)
             self.inputs.append(input_field)
 
-        #botones
+        
         button_configs = [
             ["Regresar", 1270, 655, 77, 70],
             ["Confirmar", 798, 554, 227, 78],
@@ -180,7 +178,7 @@ class EliminarProducto(QMainWindow):
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
 
-        # fondo
+        
         background_label = QLabel(central_widget)
         pixmap = QPixmap('imagenes/eliminarpr.png')
         background_label.setPixmap(pixmap)
@@ -196,7 +194,7 @@ class EliminarProducto(QMainWindow):
         self.inputs = []
         for placeholder, x, y, width, height in input_configs:
             input_field = QLineEdit(self)
-            input_field.setPlaceholderText(placeholder)  # Texto de referencia dentro del campo
+            input_field.setPlaceholderText(placeholder)  
             input_field.setFixedSize(width, height)
             input_field.move(x, y)
             input_field.setStyleSheet("""
@@ -210,7 +208,7 @@ class EliminarProducto(QMainWindow):
                 }
             """)
             self.inputs.append(input_field)
-        #boton
+        
         button_configs = [
             ["Regresar", 1270, 655, 77, 70],
             ["Confirmar", 798, 554, 227, 78],
@@ -256,14 +254,14 @@ class EditarProducto(QMainWindow):
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
 
-        # fondo
+        
         background_label = QLabel(central_widget)
         pixmap = QPixmap('imagenes/editarpr.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)   
-    #boton
+    
         button_configs = [
             ["Regresar", 1270, 655, 77, 70],
         ]
