@@ -75,6 +75,8 @@ class MainWindow(QMainWindow):
             self.main_window = personal.MainPersonal()
             self.main_window.show()
             self.close()
+        elif button.text() == "Salir":
+            self.close()
 
 
 
