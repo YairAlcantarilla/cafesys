@@ -111,9 +111,8 @@ class AgregarProducto(QMainWindow):
             ["", 598, 194, 317, 40],
             ["", 598, 284, 317, 40],
             ["", 598, 374, 317, 40],
-            ["", 598, 464, 317, 40],
             ["", 994, 198, 250, 40],
-            ["", 994, 287, 250, 40],   
+             
         ]
 
         self.inputs = []
@@ -169,12 +168,10 @@ class AgregarProducto(QMainWindow):
             self.close()   
         elif button.text() == "Confirmar":
             datos = {
-                "ID_producto": self.inputs[0].text(),
-                "Nombre": self.inputs[1].text(),
-                "Precio": self.inputs[2].text(),
-                "Disponibilidad": self.inputs[3].text(),
-                "Categoria": self.inputs[4].text(),
-                "Cantidad": self.inputs[5].text()
+                "Nombre": self.inputs[0].text(),
+                "Categoria": self.inputs[1].text(),                    
+                "Disponibilidad": int(self.inputs[2].text()),
+                "Precio": float(self.inputs[3].text()),
                 }
 
             if all(datos.values()):
@@ -376,9 +373,9 @@ class ListaProducto(QMainWindow):
         # Crear la tabla
         self.table_widget = QTableWidget(self)
         self.table_widget.setGeometry(15, 15, 620, 400)  # Posición y tamaño
-        self.table_widget.setColumnCount(6)  # Número de columnas
+        self.table_widget.setColumnCount(5)  # Número de columnas
         self.table_widget.setHorizontalHeaderLabels([
-            "ID", "Nombre", "Precio", "Disponibilidad", "Categoría", "Cantidad"
+            "ID", "Nombre", "Categoría", "Disponibilidad", "Precio",
         ])
 
         self.cargar_datos()

@@ -1,5 +1,6 @@
 import p_inicio
 import sys
+import conexion
 from PyQt6.QtCore import Qt, QPropertyAnimation
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QLineEdit
@@ -190,7 +191,26 @@ class AgregarE(QMainWindow):
         if button.text() == "Regresar":
             self.cambioP = MainPersonal()     
         elif button.text() == "Confirmar":
-            self.cambioP = MainPersonal() 
+            #self.cambioP = MainPersonal() 
+            datos = {
+                
+                "Nombre": self.inputs[1].text(),
+                "Ocupacion": self.inputs[2].text(),
+                "Direccion": self.inputs[3].text(),
+                "Telefono": self.inputs[4].text(),
+                "Correo": self.inputs[5].text()
+                }
+
+            if all(datos.values()):
+                try:
+                    conexion.insertar_dato("usuario", datos)
+                    QMessageBox.information(self, "Éxito", "Usuario agregado correctamente.")
+                except Exception as e:
+                    QMessageBox.critical(self, "Error", f"No se pudo agregar el Usuario:\n{str(e)}")
+            else:
+                QMessageBox.warning(self, "Advertencia", "Por favor completa todos los campos.")
+        
+            
         self.fade_out()
 
 #################################### Interfaz para eliminar empleado #######################################################
