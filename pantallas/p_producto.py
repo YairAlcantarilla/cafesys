@@ -1,10 +1,11 @@
 import sys
 import p_inicio
+import conexion
 import main_p
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLineEdit
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QTableWidget, QTableWidgetItem
 ####################################################################################################
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -166,7 +167,25 @@ class AgregarProducto(QMainWindow):
             self.main_window = MainWindow()  
             self.main_window.show()
             self.close()   
-        
+        elif button.text() == "Confirmar":
+            datos = {
+                "ID_producto": self.inputs[0].text(),
+                "Nombre": self.inputs[1].text(),
+                "Precio": self.inputs[2].text(),
+                "Disponibilidad": self.inputs[3].text(),
+                "Categoria": self.inputs[4].text(),
+                "Cantidad": self.inputs[5].text()
+                }
+
+            if all(datos.values()):
+                try:
+                    conexion.insertar_dato("Producto", datos)
+                    QMessageBox.information(self, "Éxito", "Producto agregado correctamente.")
+                except Exception as e:
+                    QMessageBox.critical(self, "Error", f"No se pudo agregar el producto:\n{str(e)}")
+            else:
+                QMessageBox.warning(self, "Advertencia", "Por favor completa todos los campos.")
+
 ######################################################################################################
 class EliminarProducto(QMainWindow):
     def __init__(self):
@@ -294,7 +313,7 @@ class EditarProducto(QMainWindow):
             self.main_window.show()
             self.close()      
 ##############################################################################    
-class ListaProducto(QMainWindow):
+"""class ListaProducto(QMainWindow):
     def __init__(self):
         super().__init__()
 
@@ -311,6 +330,8 @@ class ListaProducto(QMainWindow):
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
+        #Lista
+        mostrar_productos()
     #boton
         button_configs = [
             ["Regresar", 1270, 655, 77, 70],
@@ -320,7 +341,7 @@ class ListaProducto(QMainWindow):
             button = QPushButton(name, self)
             button.setFixedSize(width, height)
             button.move(x, y)
-            button.setStyleSheet("""
+            button.setStyleSheet(
                 QPushButton {
                     background-color: rgba(255, 255, 255, 0);
                     border: 0px solid white;
@@ -333,7 +354,7 @@ class ListaProducto(QMainWindow):
             QPushButton:pressed {
                 background-color: rgba(230, 170, 104, 80);
             }
-        """)
+        )
             self.buttons.append(button)
         for button in self.buttons:
             button.clicked.connect(self.button_clicked)
@@ -342,7 +363,47 @@ class ListaProducto(QMainWindow):
         if button.text() == "Regresar":
             self.main_window = MainWindow()  
             self.main_window.show()
-            self.close() 
+            self.close() """
+            
+
+class ListaProducto(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Lista de Productos")
+        self.setFixedSize(650, 600)
+
+        # Crear la tabla
+        self.table_widget = QTableWidget(self)
+        self.table_widget.setGeometry(15, 15, 620, 400)  # Posición y tamaño
+        self.table_widget.setColumnCount(6)  # Número de columnas
+        self.table_widget.setHorizontalHeaderLabels([
+            "ID", "Nombre", "Precio", "Disponibilidad", "Categoría", "Cantidad"
+        ])
+
+        self.cargar_datos()
+
+        # Botón para regresar
+        self.btn_regresar = QPushButton("Regresar", self)
+        self.btn_regresar.setGeometry(300, 520, 100, 40)
+        self.btn_regresar.clicked.connect(self.cerrar_ventana)
+
+    def cargar_datos(self):
+        from conexion import mostrar_productos  # Importar la función de conexión
+        datos = mostrar_productos()
+
+        self.table_widget.setRowCount(len(datos))  # Establecer número de filas
+
+        for fila, producto in enumerate(datos):
+            for columna, valor in enumerate(producto):
+                item = QTableWidgetItem(str(valor))
+                self.table_widget.setItem(fila, columna, item)
+
+    def cerrar_ventana(self):
+        self.main_window = MainWindow()
+        self.main_window.show()
+        self.close()
+
 #############################################################################
 
 
