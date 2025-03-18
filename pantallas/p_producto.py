@@ -257,7 +257,7 @@ class EliminarProducto(QMainWindow):
             self.main_window = MainWindow()  
             self.main_window.show()
             self.close() 
-
+        #elif button.text()=="":
 
 ##########################################################################################################
 class EditarProducto(QMainWindow):
