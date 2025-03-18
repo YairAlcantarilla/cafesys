@@ -272,7 +272,7 @@ class EditarProducto(QMainWindow):
 
         
         background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/editarpr.png')
+        pixmap = QPixmap('imagenes/editarprn.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)

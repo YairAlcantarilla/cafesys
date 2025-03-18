@@ -1,9 +1,10 @@
 import sys
 import p_inicio
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLineEdit
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QMessageBox
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout, 
+                           QWidget, QPushButton, QMessageBox, QLineEdit, 
+                           QComboBox, QTableWidget, QTableWidgetItem, QHeaderView)
 ####################################################################################################
 ####
 from PyQt6.QtWidgets import QGraphicsOpacityEffect
@@ -90,11 +91,6 @@ class MainCaja(QMainWindow):
         self.new_animation.setEndValue(1.0)  
         self.new_animation.start()
         self.close()
-
-    
-
-
-
 ###############################################################################################
 class CajaI(QMainWindow):
     def __init__(self):
@@ -113,11 +109,40 @@ class CajaI(QMainWindow):
         central_layout.addWidget(background_label)
 
         input_configs = [
-            [".", 694, 161, 285, 38],
-            [".", 694, 258, 285, 38],
-            [".", 1060, 161, 279, 38],
-   
+            ["Fecha", 694, 258, 285, 38],
+            ["Cantidad", 1060, 161, 279, 38],
         ]
+
+        # con esto creamos el menu desplegable
+        self.nombre_combo = QComboBox(self)
+        self.nombre_combo.setFixedSize(285, 38)
+        self.nombre_combo.move(694, 161)
+        self.nombre_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                font-size: 14px;
+                background-color: #111A2D;
+                color: #E6AA68;
+            }
+            QComboBox::drop-down {
+                border: none;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-width: 0px;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #111A2D;
+                color: #E6AA68;
+                selection-background-color: #E6AA68;
+                selection-color: #111A2D;
+            }
+        """)
+        
+        # aca por ahora llevamos ejemplos en lo que conectamos a la base de datos
+        self.nombre_combo.addItems(["Seleccionar producto", "Cafe", "Dona", "Leche"])
 
         self.inputs = []
         for placeholder, x, y, width, height in input_configs:
@@ -167,6 +192,57 @@ class CajaI(QMainWindow):
         for button in self.buttons:
             button.clicked.connect(self.button_clicked)
 
+        # Crear la tabla
+        self.table = QTableWidget(self)
+        self.table.setGeometry(40, 125, 618, 605)  # x, y, width, height
+        self.table.setColumnCount(3)
+        self.table.setHorizontalHeaderLabels(['Producto', 'Fecha', 'Cantidad'])
+        
+        # Configurar el estilo de la tabla
+        self.table.setStyleSheet("""
+            QTableWidget {
+                background-color: #111A2D;
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                color: #E6AA68;
+            }
+            QHeaderView::section {
+                background-color: #111A2D;
+                color: #E6AA68;
+                border: 1px solid #E6AA68;
+                padding: 5px;
+            }
+            QTableWidget::item {
+                border: 1px solid #E6AA68;
+                padding: 5px;
+            }
+        """)
+
+        # Ajustar el ancho de las columnas
+        header = self.table.horizontalHeader()
+        for column in range(3):
+            header.setSectionResizeMode(column, QHeaderView.ResizeMode.Stretch)
+
+        # Método para agregar una nueva fila
+        def agregar_fila(self):
+            producto = self.nombre_combo.currentText()
+            fecha = self.inputs[0].text()  # El campo de fecha
+            cantidad = self.inputs[1].text()  # El campo de cantidad
+            
+            if producto and fecha and cantidad:
+                row_position = self.table.rowCount()
+                self.table.insertRow(row_position)
+                
+                self.table.setItem(row_position, 0, QTableWidgetItem(producto))
+                self.table.setItem(row_position, 1, QTableWidgetItem(fecha))
+                self.table.setItem(row_position, 2, QTableWidgetItem(cantidad))
+
+        # Conectar el botón "Aproducto" para agregar filas
+        for button in self.buttons:
+            if button.text() == "Aproducto":
+                button.clicked.disconnect()  # Desconectar conexiones previas
+                button.clicked.connect(lambda: agregar_fila(self))
+
     def button_clicked(self):
         button = self.sender()
         if button.text() == "Regresar":
@@ -197,7 +273,8 @@ class CajaI(QMainWindow):
         self.new_animation.start()
         self.close()
        
-
+    def limpiar_tabla(self):
+        self.table.setRowCount(0)
 
 ###############################################################################################
 class CajaFinal(QMainWindow):
