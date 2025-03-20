@@ -1,4 +1,5 @@
 import sys
+import login
 import p_inicio
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
@@ -11,86 +12,7 @@ from PyQt6.QtWidgets import QGraphicsOpacityEffect
 from PyQt6.QtCore import QPropertyAnimation
 #####
 ####################################################################################################
-class MainCaja(QMainWindow):
-    def __init__(self):
-        super().__init__()
 
-        self.setWindowTitle("Pantalla de Inicio")
-        self.setFixedSize(1366, 768)
-
-        central_widget = QWidget(self)
-        self.setCentralWidget(central_widget)
-        background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/CajaP.png')
-        background_label.setPixmap(pixmap)
-        background_label.setScaledContents(True)
-        central_layout = QVBoxLayout(central_widget)
-        central_layout.addWidget(background_label)
-
-        button_configs = [
-            ["Caja", 278, 165, 290, 440],
-            ["productos", 798, 165, 290, 440],
-            
-            ["Regresar", 1270, 675, 65, 70],
-            
-        ]
-
-        self.buttons = []
-        for name, x, y, width, height in button_configs:
-            button = QPushButton(name, self)
-            button.setFixedSize(width, height)
-            button.move(x, y)
-            button.setStyleSheet("""
-                QPushButton {
-                    background-color: rgba(255, 255, 255, 0);
-                    border: 0px solid white;
-                    border-radius: 10px;
-                    color: transparent;
-            }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0);
-            }
-            QPushButton:pressed {
-                background-color: rgba(230, 170, 104, 80);
-            }
-        """)
-
-            self.buttons.append(button)
-        
-        for button in self.buttons:
-            button.clicked.connect(self.button_clicked)
-    #*************************************************************************
-    def button_clicked(self):
-            button = self.sender()
-            
-            if button.text() == "Regresar":
-                self.cambioP = p_inicio.MainWindow()
-            elif button.text() == "Caja":
-                from Caja import CajaI 
-                self.cambioP = CajaI()
-            else:
-                return
-
-            self.fade_out()  
-    #*************************************************************************
-
-    def fade_out(self):
-        self.animation = QPropertyAnimation(self, b"windowOpacity")
-        self.animation.setDuration(150) 
-        self.animation.setStartValue(1.0)  
-        self.animation.setEndValue(0.0)  
-        self.animation.finished.connect(self.open_new_window) 
-        self.animation.start()
-
-    def open_new_window(self):
-        self.cambioP.setWindowOpacity(0.0)  
-        self.cambioP.show()
-        self.new_animation = QPropertyAnimation(self.cambioP, b"windowOpacity")
-        self.new_animation.setDuration(60)  
-        self.new_animation.setStartValue(0.0)  
-        self.new_animation.setEndValue(1.0)  
-        self.new_animation.start()
-        self.close()
 ###############################################################################################
 class CajaI(QMainWindow):
     def __init__(self):
@@ -246,13 +168,13 @@ class CajaI(QMainWindow):
     def button_clicked(self):
         button = self.sender()
         if button.text() == "Regresar":
-            self.cambioP = p_inicio.MainWindow()  
+            self.cambioP = login.LoginWindow()  
         elif button.text() == "Buscar":
-            self.cambioP = MainCaja()  
+            pass  
         elif button.text() == "Ccompra":
             self.cambioP = CajaFinal()  
         elif button.text() == "Ecompra":
-            self.cambioP = MainCaja()  
+            pass
         self.fade_out()  
         
     def fade_out(self):
@@ -358,6 +280,6 @@ class CajaFinal(QMainWindow):
 ##############
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = MainCaja()
+    window = CajaI()
     window.show()
     sys.exit(app.exec())

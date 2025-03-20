@@ -20,20 +20,21 @@ class MainWindow(QMainWindow):
 
         # fondo
         background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/fondomenu.png')
+        pixmap = QPixmap('imagenes/fondomenu1.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
 
         button_configs = [
-            ["Caja", 30, 152, 200, 50],
-            ["Reportes", 30, 227, 200, 50],
-            ["Productos", 30, 303, 200, 50],
-            ["Personal", 30, 378, 200, 50],
-            ["Inventario", 30, 454, 200, 50],
-            ["Ajustes", 30, 530, 200, 50],
-            ["Salir", 30, 605, 200, 50]
+            ["Caja", 94, 186, 222, 394],
+            ["Reportes", 334, 186, 222, 394],
+            ["Productos", 573, 186, 222, 394],
+            ["Personal", 811, 186, 222, 394],
+            ["Inventario",1050, 186, 222, 394],
+            ["Ajustes", 1152, 10, 90, 90],
+            ["Salir", 1268, 10, 70, 90],
+            ["Ayuda", 1248, 705, 102, 45],
         ]
 
         self.buttons = []
@@ -49,10 +50,10 @@ class MainWindow(QMainWindow):
                     color: transparent;
             }
             QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0);
+                background-color: rgba(255, 255, 255, 25);
             }
             QPushButton:pressed {
-                background-color: rgba(230, 170, 104, 80);
+                background-color: rgba(230, 170, 104, 70);
             }
         """)
 
@@ -68,7 +69,7 @@ class MainWindow(QMainWindow):
             self.main_window.show()
             self.close()
         elif button.text() == "Caja":
-            self.main_window = Caja.MainCaja()
+            self.main_window = Caja.CajaI()
             self.main_window.show()
             self.close()
         elif button.text() == "Personal":

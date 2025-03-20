@@ -19,7 +19,7 @@ class LoginWindow(QWidget):
 
         ###################
         self.logo_label = QLabel(self)
-        ruta_imagen = "./imagenes/logo.png"  
+        ruta_imagen = "./imagenes/CAFESYSNUEVO.png"  
         pixmap = QPixmap(ruta_imagen)
 
         if not pixmap.isNull():
@@ -67,7 +67,7 @@ class LoginWindow(QWidget):
             self.main_window.show()
             self.close()
         elif usuario == "aaa" and contraseña == "1234":
-            self.main_window = Caja.MainCaja()
+            self.main_window = Caja.CajaI()
             self.main_window.show()
             self.close()
         else:
