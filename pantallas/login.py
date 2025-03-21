@@ -1,6 +1,8 @@
 import sys
 import os
 import p_inicio
+import p_inventario
+import P_Registros
 import Caja
 from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QMessageBox
 from PyQt6.QtGui import QPixmap

@@ -2,6 +2,8 @@ import p_producto
 import Caja
 import personal
 import main_p
+import p_inventario
+import P_Registros
 import sys
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
@@ -74,6 +76,14 @@ class MainWindow(QMainWindow):
             self.close()
         elif button.text() == "Personal":
             self.main_window = personal.MainPersonal()
+            self.main_window.show()
+            self.close()
+        elif button.text() == "Inventario":
+            self.main_window = p_inventario.MainWindow()
+            self.main_window.show()
+            self.close()
+        elif button.text() == "Reportes":
+            self.main_window = P_Registros.MainR()
             self.main_window.show()
             self.close()
         elif button.text() == "Salir":

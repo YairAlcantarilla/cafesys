@@ -27,12 +27,11 @@ class MainPersonal(QMainWindow):
 
 
         button_configs = [
-            ["Caja", 30, 152, 200, 50],
             #otrosbotones
-            ["AgregarE", 184, 144, 344, 55],
-            ["EliminarE", 184, 225, 344, 55],
-            ["EditarE", 184, 306, 344, 55],
-            ["ListaE", 184, 387, 344, 55],
+            ["AgregarE", 875, 144, 344, 55],
+            ["EliminarE", 875, 225, 344, 55],
+            ["EditarE", 875, 306, 344, 55],
+
             ["RegresarE", 1270, 655, 77, 70],
             
         ]
@@ -44,7 +43,7 @@ class MainPersonal(QMainWindow):
             button.move(x, y)
             button.setStyleSheet("""
                 QPushButton {
-                    background-color: rgba(255, 255, 255, 0);
+                    background-color: rgba(255, 255, 255, 50);
                     border: 0px solid white;
                     border-radius: 10px;
                     color: transparent;
