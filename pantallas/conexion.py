@@ -7,7 +7,7 @@ def conectar_db():
         conexion =mysql.connector.connect(
             host= "localhost",
             user = "root",
-            passwd="12345678",
+            passwd="895488",
             database="tienda"
         )
         return conexion
@@ -61,3 +61,16 @@ def mostrar_productos():
         conexion.close()
         return registros
     return[]
+
+def obtener_categorias():
+    try:
+        conexion = conectar_db() 
+        if conexion:
+            cursor = conexion.cursor()
+            cursor.execute("SELECT DISTINCT Categoria FROM Producto")
+            categorias = cursor.fetchall()
+            conexion.close()
+            return categorias
+        return []
+    except Exception as e:
+        raise Exception(f"Error al obtener categorías: {str(e)}")

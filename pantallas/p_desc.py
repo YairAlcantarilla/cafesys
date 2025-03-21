@@ -369,25 +369,6 @@ class ListaDto(QMainWindow):
             self.main_window.show()
             self.close() 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #################################################
 if __name__ == "__main__":
     app = QApplication(sys.argv)

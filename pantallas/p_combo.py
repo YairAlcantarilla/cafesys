@@ -250,7 +250,7 @@ class Editarcombo(QMainWindow):
 
         # fondo agregar
         background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/Editar combop.png')
+        pixmap = QPixmap('imagenes/Editar combo.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
