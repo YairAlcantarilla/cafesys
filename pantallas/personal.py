@@ -340,49 +340,52 @@ class EliminarE(QMainWindow):
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
 
-        #**************************************************************
-        input_configs = [
-            ["Ingrese ID", 598, 194, 317, 40, False], 
-            ["", 598, 284, 317, 40, True],  
-            ["", 598, 369, 317, 40, True],  
-        ]
+        # Crear la tabla
+        self.table_widget = QTableWidget(self)
+        self.table_widget.setGeometry(160, 145, 650, 555)
+        self.table_widget.setColumnCount(6)
+        self.table_widget.setHorizontalHeaderLabels([
+            "ID", "Contraseña", "Nombre", "Teléfono", "Dirección", "ID Puesto"
+        ])
 
-        # 🔹 Lista para almacenar los QLineEdit
-        self.inputs = []
+        # Estilo de la tabla
+        self.table_widget.setStyleSheet("""
+            QTableWidget {
+                background-color: #111A2D;
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                color: #E6AA68;
+                gridline-color: #E6AA68;
+            }
+            QHeaderView::section {
+                background-color: #111A2D;
+                color: #E6AA68;
+                border: 1px solid #E6AA68;
+                padding: 5px;
+            }
+            QTableWidget::item {
+                border: 1px solid #E6AA68;
+                padding: 5px;
+            }
+        """)
 
-        for placeholder, x, y, width, height, read_only in input_configs:
-            input_field = QLineEdit(self)
-            input_field.setPlaceholderText(placeholder)
-            input_field.setFixedSize(width, height)
-            input_field.move(x, y)
-            input_field.setReadOnly(read_only)  # Solo lectura si es True
+        # Ajustar el ancho de las columnas
+        header = self.table_widget.horizontalHeader()
+        for i in range(6):
+            header.setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
 
-            # 🔹 Estilo visual
-            input_field.setStyleSheet("""
-                QLineEdit {
-                    border: 1px solid #E6AA68;
-                    border-radius: 10px;
-                    padding: 5px;
-                    font-size: 14px;
-                    background-color: #111A2D;
-                    color: #E6AA68;
-                }
-                QLineEdit:read-only {
-                    background-color: #222A3D;
-                    color: #B4B4B4;
-                    border: 1px solid #E6AA68;
-                }
-            """)
+        # Cargar datos
+        self.cargar_datos()
+        
+        # Variable para almacenar el ID seleccionado
+        self.id_seleccionado = None
+        
+        # Conectar el evento de selección
+        self.table_widget.itemSelectionChanged.connect(self.on_selection_changed)
 
-            self.inputs.append(input_field)
-
-
-#**********************************************************************
         button_configs = [
-            ["EliminarE", 184, 144, 344, 55],
-            ["Confirmar", 810, 554, 227, 78],
             ["Regresar", 1270, 655, 77, 70],
-            
+            ["Confirmar", 810, 554, 227, 78],  # Button for deletion
         ]
 
         self.buttons = []
@@ -396,27 +399,64 @@ class EliminarE(QMainWindow):
                     border: 0px solid white;
                     border-radius: 10px;
                     color: transparent;
-            }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0);
-            }
-            QPushButton:pressed {
-                background-color: rgba(230, 170, 104, 80);
-            }
-        """)
+                }
+                QPushButton:hover {
+                    background-color: rgba(255, 255, 255, 0);
+                }
+                QPushButton:pressed {
+                    background-color: rgba(230, 170, 104, 80);
+                }
+            """)
             self.buttons.append(button)
         
         for button in self.buttons:
             button.clicked.connect(self.button_clicked)
 
+    def cargar_datos(self):
+        try:
+            from conexion import mostrar_usuarios
+            usuarios = mostrar_usuarios()
+            
+            self.table_widget.setRowCount(len(usuarios))
+            
+            for fila, usuario in enumerate(usuarios):
+                self.table_widget.setItem(fila, 0, QTableWidgetItem(str(usuario[0])))  # ID
+                self.table_widget.setItem(fila, 1, QTableWidgetItem('*****'))          # Contraseña oculta
+                self.table_widget.setItem(fila, 2, QTableWidgetItem(str(usuario[2])))  # Nombre
+                self.table_widget.setItem(fila, 3, QTableWidgetItem(str(usuario[3])))  # Teléfono
+                self.table_widget.setItem(fila, 4, QTableWidgetItem(str(usuario[4])))  # Dirección
+                self.table_widget.setItem(fila, 5, QTableWidgetItem(str(usuario[5])))  # ID_Puesto
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar los usuarios: {str(e)}")
+
+    def on_selection_changed(self):
+        selected_items = self.table_widget.selectedItems()
+        if selected_items:
+            self.id_seleccionado = self.table_widget.item(selected_items[0].row(), 0).text()
+
     def button_clicked(self):
         button = self.sender()
         if button.text() == "Regresar":
             self.cambioP = MainPersonal()
-        elif button.text() == "Eliminar":
-            self.cambioP = MainPersonal()
-    
-        self.fade_out()  
+            self.fade_out()
+        elif button.text() == "Confirmar":
+            if self.id_seleccionado:
+                reply = QMessageBox.question(self, 'Confirmación', 
+                                          '¿Está seguro de eliminar este usuario?',
+                                          QMessageBox.StandardButton.Yes | 
+                                          QMessageBox.StandardButton.No)
+                
+                if reply == QMessageBox.StandardButton.Yes:
+                    try:
+                        from conexion import eliminar_usuario
+                        eliminar_usuario(self.id_seleccionado)
+                        QMessageBox.information(self, "Éxito", "Usuario eliminado correctamente")
+                        self.cambioP = MainPersonal()
+                        self.fade_out()
+                    except Exception as e:
+                        QMessageBox.critical(self, "Error", f"No se pudo eliminar el usuario: {str(e)}")
+            else:
+                QMessageBox.warning(self, "Advertencia", "Por favor seleccione un usuario para eliminar")
         
     def fade_out(self):
         self.animation = QPropertyAnimation(self, b"windowOpacity")

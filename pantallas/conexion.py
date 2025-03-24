@@ -7,7 +7,7 @@ def conectar_db():
         conexion =mysql.connector.connect(
             host= "localhost",
             user = "root",
-            passwd="1234",
+            passwd="895488",
             database="tienda"
         )
         return conexion
@@ -167,3 +167,13 @@ def actualizar_producto(nombre_original, datos):
         conexion.close()
     except Exception as e:
         raise Exception (f"Error al actualizar producto: {str(e)}")
+
+def eliminar_usuario(id_usuario):
+    try:
+        conexion = conectar_db()
+        with conexion.cursor() as cursor:
+            consulta = "DELETE FROM usuario WHERE ID_usuario = %s"
+            cursor.execute(consulta, (id_usuario,))
+        conexion.commit()
+    finally:
+        conexion.close()
