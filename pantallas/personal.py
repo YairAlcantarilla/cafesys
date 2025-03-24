@@ -3,8 +3,10 @@ import sys
 import conexion
 from PyQt6.QtCore import Qt, QPropertyAnimation
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QLineEdit
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QGraphicsOpacityEffect
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout, 
+                           QWidget, QPushButton, QGraphicsOpacityEffect, QLineEdit,
+                           QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox,
+                           QRadioButton, QButtonGroup)
 #################################### Interfaz principal de personal #######################################################
 
 class MainPersonal(QMainWindow):
@@ -25,13 +27,48 @@ class MainPersonal(QMainWindow):
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
 
+        # Crear la tabla
+        self.table_widget = QTableWidget(self)
+        self.table_widget.setGeometry(160, 145, 650, 555)  # x, y, width, height
+        self.table_widget.setColumnCount(6)
+        self.table_widget.setHorizontalHeaderLabels([
+            "ID", "Contraseña", "Nombre", "Teléfono", "Dirección", "ID Puesto"
+        ])
+
+        # Estilo de la tabla
+        self.table_widget.setStyleSheet("""
+            QTableWidget {
+                background-color: #111A2D;
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                color: #E6AA68;
+                gridline-color: #E6AA68;
+            }
+            QHeaderView::section {
+                background-color: #111A2D;
+                color: #E6AA68;
+                border: 1px solid #E6AA68;
+                padding: 5px;
+            }
+            QTableWidget::item {
+                border: 1px solid #E6AA68;
+                padding: 5px;
+            }
+        """)
+
+        # Ajustar el ancho de las columnas
+        header = self.table_widget.horizontalHeader()
+        for i in range(6):
+            header.setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
+
+        # Cargar datos
+        self.cargar_datos()
 
         button_configs = [
             #otrosbotones
             ["AgregarE", 875, 144, 344, 55],
             ["EliminarE", 875, 225, 344, 55],
             ["EditarE", 875, 306, 344, 55],
-
             ["RegresarE", 1270, 655, 77, 70],
             
         ]
@@ -60,6 +97,27 @@ class MainPersonal(QMainWindow):
         for button in self.buttons:
             button.clicked.connect(self.button_clicked)
 
+    def cargar_datos(self):
+        try:
+            from conexion import mostrar_usuarios
+            usuarios = mostrar_usuarios()
+            
+            self.table_widget.setRowCount(len(usuarios))
+            
+            for fila, usuario in enumerate(usuarios):
+                self.table_widget.setItem(fila, 0, QTableWidgetItem(str(usuario[0])))  # ID
+                self.table_widget.setItem(fila, 1, QTableWidgetItem('*****'))          # Contraseña oculta
+                self.table_widget.setItem(fila, 2, QTableWidgetItem(str(usuario[2])))  # Nombre
+                self.table_widget.setItem(fila, 3, QTableWidgetItem(str(usuario[3])))  # Teléfono
+                self.table_widget.setItem(fila, 4, QTableWidgetItem(str(usuario[4])))  # Dirección
+                self.table_widget.setItem(fila, 5, QTableWidgetItem(str(usuario[5])))  # ID_Puesto
+        except Exception as e:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Icon.Critical)
+            msg.setText(f"Error al cargar los usuarios: {str(e)}")
+            msg.setWindowTitle("Error")
+            msg.exec()
+
     def button_clicked(self):
         button = self.sender()
         if button.text() == "AgregarE":
@@ -68,8 +126,6 @@ class MainPersonal(QMainWindow):
             self.cambioP = EliminarE()
         elif button.text() == "EditarE":
             self.cambioP = EditarE()
-        elif button.text() == "ListaE":
-            self.cambioP = ListaE()
         elif button.text() == "RegresarE":
             self.cambioP = p_inicio.MainWindow()  
 
@@ -111,13 +167,12 @@ class AgregarE(QMainWindow):
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
 
+        # Modificar input_configs para quitar el campo de ocupación
         input_configs = [
-            [".", 598, 194, 317, 40],
-            [".", 598, 284, 317, 40],
-            [".", 598, 369, 317, 40],
-           
-            [".", 964, 194, 250, 40],
-            [".", 964, 284, 250, 40],   
+            ["Nombre", 598, 194, 317, 40],
+            ["Direccion", 598, 369, 317, 40],
+            ["Telefono", 964, 194, 250, 40], 
+            ["Contraseña", 964, 369, 250, 40] 
         ]
 
         self.inputs = []
@@ -138,6 +193,53 @@ class AgregarE(QMainWindow):
             """)
             self.inputs.append(input_field)
         
+        # Crear radio buttons para tipo de usuario
+        self.tipo_usuario_group = QButtonGroup(self)
+        
+        # Radio button para Administrador
+        self.admin_radio = QRadioButton("Administrador", self)
+        self.admin_radio.move(598, 284)  # Mover a la posición del input eliminado
+        self.admin_radio.setStyleSheet("""
+            QRadioButton {
+                color: #E6AA68;
+                font-size: 14px;
+            }
+            QRadioButton::indicator {
+                width: 15px;
+                height: 15px;
+                border: 2px solid #E6AA68;
+                border-radius: 8px;
+            }
+            QRadioButton::indicator:checked {
+                background-color: #E6AA68;
+                border: 2px solid #E6AA68;
+            }
+        """)
+        
+        # Radio button para Cajero
+        self.cajero_radio = QRadioButton("Cajero", self)
+        self.cajero_radio.move(720, 284)  # 30 píxeles debajo del radio de administrador
+        self.cajero_radio.setStyleSheet("""
+            QRadioButton {
+                color: #E6AA68;
+                font-size: 14px;
+            }
+            QRadioButton::indicator {
+                width: 15px;
+                height: 15px;
+                border: 2px solid #E6AA68;
+                border-radius: 8px;
+            }
+            QRadioButton::indicator:checked {
+                background-color: #E6AA68;
+                border: 2px solid #E6AA68;
+            }
+        """)
+        
+        # Agregar radio buttons al grupo
+        self.tipo_usuario_group.addButton(self.admin_radio)
+        self.tipo_usuario_group.addButton(self.cajero_radio)
+
         button_configs = [
             ["Regresar", 1270, 655, 77, 70],
             ["Confirmar", 810, 554, 227, 78],
@@ -190,26 +292,35 @@ class AgregarE(QMainWindow):
         if button.text() == "Regresar":
             self.cambioP = MainPersonal()     
         elif button.text() == "Confirmar":
-            #self.cambioP = MainPersonal() 
-            datos = {
+            tipo_usuario = 1 if self.admin_radio.isChecked() else 2 if self.cajero_radio.isChecked() else None
+            
+            if tipo_usuario is None:
+                QMessageBox.warning(self, "Advertencia", "Por favor seleccione un tipo de usuario")
+                return
+
+            # Validar teléfono (máximo 10 dígitos)
+            telefono = self.inputs[2].text()
+            if not telefono.isdigit() or len(telefono) > 10:
+                QMessageBox.warning(self, "Advertencia", "El teléfono debe contener solo números y máximo 10 dígitos")
+                return
                 
-                "Nombre": self.inputs[1].text(),
-                "Ocupacion": self.inputs[2].text(),
-                "Direccion": self.inputs[3].text(),
-                "Telefono": self.inputs[4].text(),
-                "Correo": self.inputs[5].text()
-                }
+            datos = {
+                "nombre": self.inputs[0].text(),        # Nombre
+                "Direccion": self.inputs[1].text(),     # Dirección
+                "telefono": telefono,                   # Teléfono (validado)
+                "contrasenna": self.inputs[3].text(),   # Contraseña
+                "ID_Puesto": tipo_usuario              # Tipo de usuario (del radio button)
+            }
 
             if all(datos.values()):
                 try:
                     conexion.insertar_dato("usuario", datos)
                     QMessageBox.information(self, "Éxito", "Usuario agregado correctamente.")
                 except Exception as e:
-                    QMessageBox.critical(self, "Error", f"No se pudo agregar el Usuario:\n{str(e)}")
+                    QMessageBox.critical(self, "Error", f"No se pudo agregar el usuario:\n{str(e)}")
             else:
                 QMessageBox.warning(self, "Advertencia", "Por favor completa todos los campos.")
         
-            
         self.fade_out()
 
 #################################### Interfaz para eliminar empleado #######################################################

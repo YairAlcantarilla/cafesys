@@ -74,3 +74,96 @@ def obtener_categorias():
         return []
     except Exception as e:
         raise Exception(f"Error al obtener categorías: {str(e)}")
+
+def mostrar_usuarios():
+    conexion = conectar_db()
+    if conexion:
+        try:
+            cursor = conexion.cursor()
+            cursor.execute("SELECT id_usuario, contrasenna, nombre, telefono, Direccion, ID_Puesto FROM usuario")
+            registros = cursor.fetchall()
+            return registros
+        except Exception as e:
+            raise Exception(f"Error al obtener usuarios: {str(e)}")
+        finally:
+            conexion.close()
+    return []
+
+def insertar_usuario(datos):
+    conexion = conectar_db()
+    if conexion:
+        try:
+            cursor = conexion.cursor()
+            # No incluimos el id_usuario ya que lo generará el trigger
+            sql = """INSERT INTO usuario (contrasenna, nombre, telefono, Direccion, ID_Puesto) 
+                     VALUES (%s, %s, %s, %s, %s)"""
+            valores = (
+                datos['contrasenna'],
+                datos['nombre'],
+                datos['telefono'],
+                datos['Direccion'],
+                datos['ID_Puesto']
+            )
+            cursor.execute(sql, valores)
+            conexion.commit()
+        except Exception as e:
+            raise Exception(f"Error al insertar usuario: {str(e)}")
+        finally:
+            conexion.close()
+
+def get_next_id(table_name, id_column):
+    try:
+        cursor = conectar_db().cursor()
+        cursor.execute(f"SELECT MAX({id_column}) FROM {table_name}")
+        max_id = cursor.fetchone()[0]
+        return 1 if max_id is None else max_id + 1
+    except Exception as e:
+        raise Exception(f"Error getting next ID: {str(e)}")
+
+def eliminar_producto(nombre_producto):
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        
+        # SQL para eliminar el producto
+        sql = "DELETE FROM Producto WHERE Nombre = %s"
+        cursor.execute(sql, (nombre_producto,))
+        
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+        
+        return True
+    except Exception as e:
+        raise Exception(f"Error al eliminar el producto: {str(e)}")
+
+def obtener_producto_por_nombre(nombre):
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        cursor.execute("SELECT * FROM Producto WHERE Nombre = %s", (nombre,))
+        producto = cursor.fetchone()
+        conexion.close()
+        return producto
+    except Exception as e:
+        raise Exception(f"Error al obtener producto: {str(e)}")
+
+def actualizar_producto(nombre_original, datos):
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        sql = """UPDATE Producto 
+                 SET Nombre = %s, Precio = %s, Cantidad = %s, Categoria = %s 
+                 WHERE Nombre = %s"""
+        valores = (
+            datos['Nombre'],
+            datos['Precio'],
+            datos['Cantidad'],
+            datos['Categoria'],
+            nombre_original
+        )
+        cursor.execute(sql, valores)
+        conexion.commit()
+        conexion.close()
+    except Exception as e:
+        raise Exception (f"Error al actualizar producto: {str(e)}")

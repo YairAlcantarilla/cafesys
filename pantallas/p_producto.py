@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
         self.table_widget.setGeometry(160, 145, 650, 555)  # x, y, width, height
         self.table_widget.setColumnCount(4)
         self.table_widget.setHorizontalHeaderLabels([
-            "Nombre", "Categoría", "Stock", "Precio"
+            "Nombre", "Categoria", "Stock", "Precio"
         ])
 
         # Estilo de la tabla
@@ -111,10 +111,11 @@ class MainWindow(QMainWindow):
             self.table_widget.setRowCount(len(productos))
             
             for fila, producto in enumerate(productos):
-                self.table_widget.setItem(fila, 0, QTableWidgetItem(str(producto[1])))
-                self.table_widget.setItem(fila, 1, QTableWidgetItem(str(producto[2])))
-                self.table_widget.setItem(fila, 2, QTableWidgetItem(str(producto[3])))
-                self.table_widget.setItem(fila, 3, QTableWidgetItem(f"${str(producto[4])}"))
+                # Corrección del orden de los datos
+                self.table_widget.setItem(fila, 0, QTableWidgetItem(str(producto[1])))  # Nombre
+                self.table_widget.setItem(fila, 1, QTableWidgetItem(str(producto[3])))  # Stock/Cantidad
+                self.table_widget.setItem(fila, 2, QTableWidgetItem(str(producto[2])))  # Categoria
+                self.table_widget.setItem(fila, 3, QTableWidgetItem(f"${str(producto[4])}"))  # Precio
         except Exception as e:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Icon.Critical)
@@ -273,11 +274,16 @@ class AgregarProducto(QMainWindow):
 
     def guardar_producto(self):
         try:
+            # Get the next available ID
+            from conexion import get_next_id
+            next_id = get_next_id("Producto", "ID_Producto")
+            
             datos = {
+                "ID_Producto": next_id,
                 "Nombre": self.inputs[0].text(),
                 "Precio": float(self.inputs[1].text()),
-                "Disponibilidad": int(self.inputs[2].text()),
-                "Categoria": self.categoria_combo.currentText()
+                "Categoria": self.categoria_combo.currentText(),
+                "Cantidad": int(self.inputs[2].text())
             }
             conexion.insertar_dato("Producto", datos)
             QMessageBox.information(self, "Éxito", "Producto agregado correctamente")
@@ -386,8 +392,17 @@ class EliminarProducto(QMainWindow):
                 try:
                     from conexion import eliminar_producto
                     eliminar_producto(producto_seleccionado)
+                    
+                    # Update the main window's table
+                    for widget in QApplication.topLevelWidgets():
+                        if isinstance(widget, MainWindow):
+                            widget.cargar_datos()
+                            break
+                    
                     QMessageBox.information(self, "Éxito", "Producto eliminado correctamente")
-                    self.cargar_productos()  # Recargamos la lista
+                    # Reset combo and reload products
+                    self.producto_combo.clear()
+                    self.cargar_productos()
                 except Exception as e:
                     QMessageBox.critical(self, "Error", f"No se pudo eliminar el producto:\n{str(e)}")
             else:
@@ -404,16 +419,70 @@ class EditarProducto(QMainWindow):
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
 
-        
         background_label = QLabel(central_widget)
         pixmap = QPixmap('imagenes/editarpr.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
-        central_layout.addWidget(background_label)   
-    
+        central_layout.addWidget(background_label)
+
+        # Crear el menú desplegable para seleccionar producto
+        self.producto_combo = QComboBox(self)
+        self.producto_combo.setFixedSize(317, 40)
+        self.producto_combo.move(598, 194)
+        self.producto_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                font-size: 14px;
+                background-color: #111A2D;
+                color: #E6AA68;
+            }
+            QComboBox::drop-down { border: none; }
+            QComboBox::down-arrow { image: none; }
+            QComboBox QAbstractItemView {
+                background-color: #111A2D;
+                color: #E6AA68;
+                selection-background-color: #E6AA68;
+                selection-color: #111A2D;
+            }
+        """)
+        self.producto_combo.currentIndexChanged.connect(self.cargar_datos_producto)
+
+        # Crear inputs
+        labels = ["Nombre:", "Precio:", "Stock:", "Categoría:"]
+        self.inputs = []
+        for i in range(3):  # Solo 3 inputs (nombre, precio, stock)
+            input_field = QLineEdit(self)
+            input_field.setFixedSize(317, 40)
+            input_field.move(598, 264 + i * 70)
+            input_field.setStyleSheet("""
+                QLineEdit {
+                    border: 1px solid #E6AA68;
+                    border-radius: 10px;
+                    padding: 5px;
+                    font-size: 14px;
+                    background-color: #111A2D;
+                    color: #E6AA68;
+                }
+            """)
+            self.inputs.append(input_field)
+
+        # Crear ComboBox para categorías
+        self.categoria_combo = QComboBox(self)
+        self.categoria_combo.setFixedSize(317, 40)
+        self.categoria_combo.move(598, 474)
+        self.categoria_combo.setStyleSheet(self.producto_combo.styleSheet())
+
+        # Cargar datos
+        self.cargar_productos()
+        self.cargar_categorias()
+
+        # Botones
         button_configs = [
             ["Regresar", 1270, 655, 77, 70],
+            ["Guardar", 798, 554, 227, 78],
         ]
         self.buttons = []
         for name, x, y, width, height in button_configs:
@@ -426,23 +495,112 @@ class EditarProducto(QMainWindow):
                     border: 0px solid white;
                     border-radius: 10px;
                     color: transparent;
-            }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0);
-            }
-            QPushButton:pressed {
-                background-color: rgba(230, 170, 104, 80);
-            }
-        """)
+                }
+                QPushButton:hover {
+                    background-color: rgba(255, 255, 255, 0);
+                }
+                QPushButton:pressed {
+                    background-color: rgba(230, 170, 104, 80);
+                }
+            """)
             self.buttons.append(button)
-        for button in self.buttons:
             button.clicked.connect(self.button_clicked)
+
+    def cargar_productos(self):
+        self.producto_combo.addItem("Seleccionar producto")
+        try:
+            from conexion import mostrar_productos
+            productos = mostrar_productos()
+            for producto in productos:
+                self.producto_combo.addItem(producto[1])
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar productos: {str(e)}")
+
+    def cargar_categorias(self):
+        try:
+            from conexion import obtener_categorias
+            categorias = obtener_categorias()
+            self.categoria_combo.addItem("Seleccionar categoría")
+            for categoria in categorias:
+                self.categoria_combo.addItem(categoria[0])
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar categorías: {str(e)}")
+
+    def cargar_datos_producto(self):
+        if self.producto_combo.currentText() != "Seleccionar producto":
+            try:
+                from conexion import obtener_producto_por_nombre
+                producto = obtener_producto_por_nombre(self.producto_combo.currentText())
+                if producto:
+                    # Corregir el mapeo de los datos según el orden real
+                    # producto[0] = ID_producto
+                    # producto[1] = nombre
+                    # producto[2] = precio 
+                    # producto[3] = categoria
+                    # producto[4] = cantidad
+                    
+                    self.inputs[0].setText(str(producto[1]))  # Nombre
+                    self.inputs[1].setText(str(producto[2]))  # Precio
+                    self.inputs[2].setText(str(producto[4]))  # Cantidad/Stock
+                    
+                    # Seleccionar la categoría correcta
+                    categoria = str(producto[3])  # Categoría
+                    index = self.categoria_combo.findText(categoria)
+                    if index >= 0:
+                        self.categoria_combo.setCurrentIndex(index)
+                    else:
+                        self.categoria_combo.setCurrentIndex(0)
+                        
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Error al cargar datos del producto: {str(e)}")
+
+    def validar_datos(self):
+        if not all(input.text() for input in self.inputs):
+            QMessageBox.warning(self, "Advertencia", "Por favor complete todos los campos")
+            return False
+        if self.categoria_combo.currentText() == "Seleccionar categoría":
+            QMessageBox.warning(self, "Advertencia", "Por favor seleccione una categoría")
+            return False
+        try:
+            float(self.inputs[1].text())  # Validar precio
+            int(self.inputs[2].text())    # Validar stock
+            return True
+        except ValueError:
+            QMessageBox.warning(self, "Advertencia", "Precio y stock deben ser números válidos")
+            return False
+
     def button_clicked(self):
         button = self.sender()
         if button.text() == "Regresar":
-            self.main_window = MainWindow()  
+            self.main_window = MainWindow()
             self.main_window.show()
-            self.close()      
+            self.close()
+        elif button.text() == "Guardar":
+            if self.validar_datos():
+                self.guardar_cambios()
+
+    def guardar_cambios(self):
+        try:
+            datos = {
+                "Nombre": self.inputs[0].text(),
+                "Precio": float(self.inputs[1].text()),
+                "Cantidad": int(self.inputs[2].text()),
+                "Categoria": self.categoria_combo.currentText()
+            }
+            from conexion import actualizar_producto
+            actualizar_producto(self.producto_combo.currentText(), datos)
+            
+            # Actualizar la ventana principal
+            for widget in QApplication.topLevelWidgets():
+                if isinstance(widget, MainWindow):
+                    widget.cargar_datos()
+                    break
+                    
+            QMessageBox.information(self, "Éxito", "Producto actualizado correctamente")
+            self.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo actualizar el producto:\n{str(e)}")
+
 ##############################################################################    
 
 class ListaProducto(QMainWindow):
