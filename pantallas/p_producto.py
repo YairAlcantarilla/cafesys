@@ -129,13 +129,11 @@ class MainWindow(QMainWindow):
             self.main_window = AgregarProducto()
             self.main_window.show()
         elif button.text() == "Eliminar":
-            self.main_window = EliminarProducto()
-            self.main_window.show()
-            self.close()
+            self.dialog = EliminarProducto()
+            self.dialog.show()
         elif button.text() == "Editar":
-            self.main_window = EditarProducto()
-            self.main_window.show()
-            self.close()
+            self.dialog = EditarProducto()
+            self.dialog.show()
         elif button.text() == "Lista":
             self.main_window = ListaProducto()
             self.main_window.show()
@@ -297,22 +295,18 @@ class EliminarProducto(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Eliminar Producto")
-        self.setFixedSize(1366, 768)
+        self.setFixedSize(400, 300)
+        self.setStyleSheet("background-color: #111A2D;")
 
-        central_widget = QWidget(self)
-        self.setCentralWidget(central_widget)
+        # Crear labels
+        label = QLabel("Seleccione producto:", self)
+        label.setStyleSheet("color: #E6AA68; font-size: 14px;")
+        label.move(30, 30)
 
-        background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/eliminarpr.png')
-        background_label.setPixmap(pixmap)
-        background_label.setScaledContents(True)
-        central_layout = QVBoxLayout(central_widget)
-        central_layout.addWidget(background_label)
-
-        # Crear el menú desplegable
+        # Crear ComboBox para productos
         self.producto_combo = QComboBox(self)
-        self.producto_combo.setFixedSize(317, 40)
-        self.producto_combo.move(598, 194)
+        self.producto_combo.setFixedSize(200, 30)
+        self.producto_combo.move(160, 25)
         self.producto_combo.setStyleSheet("""
             QComboBox {
                 border: 1px solid #E6AA68;
@@ -322,13 +316,8 @@ class EliminarProducto(QMainWindow):
                 background-color: #111A2D;
                 color: #E6AA68;
             }
-            QComboBox::drop-down {
-                border: none;
-            }
-            QComboBox::down-arrow {
-                image: none;
-                border-width: 0px;
-            }
+            QComboBox::drop-down { border: none; }
+            QComboBox::down-arrow { image: none; }
             QComboBox QAbstractItemView {
                 background-color: #111A2D;
                 color: #E6AA68;
@@ -336,14 +325,16 @@ class EliminarProducto(QMainWindow):
                 selection-color: #111A2D;
             }
         """)
-        
-        # Cargar productos desde la base de datos
+
+        # Cargar productos
         self.cargar_productos()
-        
+
+        # Botones
         button_configs = [
-            ["Regresar", 1270, 655, 77, 70],
-            ["Confirmar", 798, 554, 227, 78],
+            ["Cancelar", 30, 250, 100, 30],
+            ["Eliminar", 270, 250, 100, 30],
         ]
+        
         self.buttons = []
         for name, x, y, width, height in button_configs:
             button = QPushButton(name, self)
@@ -351,20 +342,19 @@ class EliminarProducto(QMainWindow):
             button.move(x, y)
             button.setStyleSheet("""
                 QPushButton {
-                    background-color: rgba(255, 255, 255, 0);
-                    border: 0px solid white;
+                    background-color: #E6AA68;
                     border-radius: 10px;
-                    color: transparent;
+                    color: #111A2D;
+                    font-weight: bold;
                 }
                 QPushButton:hover {
-                    background-color: rgba(255, 255, 255, 0);
+                    background-color: #D69958;
                 }
                 QPushButton:pressed {
-                    background-color: rgba(230, 170, 104, 80);
+                    background-color: #C68948;
                 }
             """)
             self.buttons.append(button)
-        for button in self.buttons:
             button.clicked.connect(self.button_clicked)
 
     def cargar_productos(self):
@@ -382,11 +372,9 @@ class EliminarProducto(QMainWindow):
 
     def button_clicked(self):
         button = self.sender()
-        if button.text() == "Regresar":
-            self.main_window = MainWindow()  
-            self.main_window.show()
+        if button.text() == "Cancelar":
             self.close()
-        elif button.text() == "Confirmar":
+        elif button.text() == "Eliminar":
             producto_seleccionado = self.producto_combo.currentText()
             if producto_seleccionado != "Seleccionar producto":
                 try:
@@ -414,22 +402,23 @@ class EditarProducto(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Editar Producto")
-        self.setFixedSize(1366, 768)
+        self.setFixedSize(400, 400)
+        self.setStyleSheet("background-color: #111A2D;")
 
-        central_widget = QWidget(self)
-        self.setCentralWidget(central_widget)
+        # Crear labels
+        labels = ["Seleccione producto:", "Nombre:", "Precio:", "Stock:", "Categoría:"]
+        self.label_widgets = []
+        
+        for i, text in enumerate(labels):
+            label = QLabel(text, self)
+            label.setStyleSheet("color: #E6AA68; font-size: 14px;")
+            label.move(30, 30 + i * 60)
+            self.label_widgets.append(label)
 
-        background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/editarpr.png')
-        background_label.setPixmap(pixmap)
-        background_label.setScaledContents(True)
-        central_layout = QVBoxLayout(central_widget)
-        central_layout.addWidget(background_label)
-
-        # Crear el menú desplegable para seleccionar producto
+        # Crear ComboBox para seleccionar producto
         self.producto_combo = QComboBox(self)
-        self.producto_combo.setFixedSize(317, 40)
-        self.producto_combo.move(598, 194)
+        self.producto_combo.setFixedSize(200, 30)
+        self.producto_combo.move(160, 25)
         self.producto_combo.setStyleSheet("""
             QComboBox {
                 border: 1px solid #E6AA68;
@@ -451,12 +440,11 @@ class EditarProducto(QMainWindow):
         self.producto_combo.currentIndexChanged.connect(self.cargar_datos_producto)
 
         # Crear inputs
-        labels = ["Nombre:", "Precio:", "Stock:", "Categoría:"]
         self.inputs = []
-        for i in range(3):  # Solo 3 inputs (nombre, precio, stock)
+        for i in range(3):
             input_field = QLineEdit(self)
-            input_field.setFixedSize(317, 40)
-            input_field.move(598, 264 + i * 70)
+            input_field.setFixedSize(200, 30)
+            input_field.move(160, 85 + i * 60)
             input_field.setStyleSheet("""
                 QLineEdit {
                     border: 1px solid #E6AA68;
@@ -471,8 +459,8 @@ class EditarProducto(QMainWindow):
 
         # Crear ComboBox para categorías
         self.categoria_combo = QComboBox(self)
-        self.categoria_combo.setFixedSize(317, 40)
-        self.categoria_combo.move(598, 474)
+        self.categoria_combo.setFixedSize(200, 30)
+        self.categoria_combo.move(160, 265)
         self.categoria_combo.setStyleSheet(self.producto_combo.styleSheet())
 
         # Cargar datos
@@ -481,9 +469,10 @@ class EditarProducto(QMainWindow):
 
         # Botones
         button_configs = [
-            ["Regresar", 1270, 655, 77, 70],
-            ["Guardar", 798, 554, 227, 78],
+            ["Cancelar", 30, 350, 100, 30],
+            ["Guardar", 270, 350, 100, 30],
         ]
+        
         self.buttons = []
         for name, x, y, width, height in button_configs:
             button = QPushButton(name, self)
@@ -491,16 +480,16 @@ class EditarProducto(QMainWindow):
             button.move(x, y)
             button.setStyleSheet("""
                 QPushButton {
-                    background-color: rgba(255, 255, 255, 0);
-                    border: 0px solid white;
+                    background-color: #E6AA68;
                     border-radius: 10px;
-                    color: transparent;
+                    color: #111A2D;
+                    font-weight: bold;
                 }
                 QPushButton:hover {
-                    background-color: rgba(255, 255, 255, 0);
+                    background-color: #D69958;
                 }
                 QPushButton:pressed {
-                    background-color: rgba(230, 170, 104, 80);
+                    background-color: #C68948;
                 }
             """)
             self.buttons.append(button)
@@ -571,9 +560,7 @@ class EditarProducto(QMainWindow):
 
     def button_clicked(self):
         button = self.sender()
-        if button.text() == "Regresar":
-            self.main_window = MainWindow()
-            self.main_window.show()
+        if button.text() == "Cancelar":
             self.close()
         elif button.text() == "Guardar":
             if self.validar_datos():
