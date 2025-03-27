@@ -7,7 +7,7 @@ def conectar_db():
         conexion =mysql.connector.connect(
             host= "localhost",
             user = "root",
-            passwd="895488",
+            passwd="895488", #Recuerden verificar que la contraseña de su base de datos sea la correcta
             database="tienda"
         )
         return conexion
@@ -177,3 +177,27 @@ def eliminar_usuario(id_usuario):
         conexion.commit()
     finally:
         conexion.close()
+
+def verificar_credenciales(ID_usuario, contrasenna):
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        
+        consulta = """
+            SELECT ID_usuario, Nombre, ID_Puesto 
+            FROM usuario 
+            WHERE ID_usuario = %s AND contrasenna = %s
+        """
+        cursor.execute(consulta, (ID_usuario, contrasenna))
+        resultado = cursor.fetchone()
+        
+        print("Resultado de la consulta:", resultado)
+        
+        cursor.close()
+        conexion.close()
+        
+        return resultado
+        
+    except Exception as e:
+        print(f"Error al verificar credenciales: {e}")
+        return None

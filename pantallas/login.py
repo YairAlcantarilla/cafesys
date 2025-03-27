@@ -7,6 +7,7 @@ import Caja
 from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QMessageBox
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
+from conexion import verificar_credenciales
 #*******************************************************************************************************************************#
 
 class LoginWindow(QWidget):
@@ -64,14 +65,31 @@ class LoginWindow(QWidget):
         usuario = self.user_input.text()
         contraseña = self.pass_input.text()
 
-        if usuario == "admin" and contraseña == "1234":
-            self.main_window = p_inicio.MainWindow()
-            self.main_window.show()
-            self.close()
-        elif usuario == "aaa" and contraseña == "1234":
-            self.main_window = Caja.CajaI()
-            self.main_window.show()
-            self.close()
+        if not usuario or not contraseña:
+            QMessageBox.warning(self, "Error", "Por favor ingrese usuario y contraseña")
+            return
+
+        resultado = verificar_credenciales(usuario, contraseña)
+
+        if resultado and len(resultado) == 3:
+            id_usuario, nombre, id_puesto = resultado
+            
+            try:
+                # Convertir id_puesto a entero para comparación
+                id_puesto = int(id_puesto)
+                
+                if id_puesto == 1:  # Administrador
+                    self.main_window = p_inicio.MainWindow()
+                    self.main_window.show()
+                else:  # Cualquier otro ID irá a Caja
+                    self.main_window = Caja.CajaI()
+                    self.main_window.show()
+                
+                self.close()
+                
+            except ValueError as e:
+                print(f"Error al convertir ID_Puesto: {e}")
+                QMessageBox.warning(self, "Error", "Error en el tipo de usuario")
         else:
             QMessageBox.warning(self, "Acceso denegado", "Usuario o contraseña incorrectos")
 
