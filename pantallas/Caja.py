@@ -5,7 +5,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout, 
                            QWidget, QPushButton, QMessageBox, QLineEdit, 
-                           QComboBox, QTableWidget, QTableWidgetItem, QHeaderView)
+                           QComboBox, QTableWidget, QTableWidgetItem, QHeaderView,  QDialog)
 ####################################################################################################
 ####
 from PyQt6.QtWidgets import QGraphicsOpacityEffect
@@ -23,7 +23,7 @@ class CajaI(QMainWindow):
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
         background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/Caja1.png')
+        pixmap = QPixmap('imagenes/Caja1 (2).png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
@@ -57,6 +57,8 @@ class CajaI(QMainWindow):
             ["Comida", 851, 126, 132, 132],
             ["Combos", 993, 126, 132, 132],
             ["Regresar", 1280, 25, 50, 50],
+            ["PEfectivo", 914, 505, 77, 75],
+            ["PTarjeta", 1015, 505, 77, 75],
             ["Ayuda", 1210, 25, 50, 50],
         ]
         self.buttons = []
@@ -142,9 +144,14 @@ class CajaI(QMainWindow):
             pass  
         elif button.text() == "Ccompra":
             self.cambioP = CajaFinal()  
-        elif button.text() == "Ecompra":
-            pass
+        elif button.text() == "PEfectivo":
+            
+            self.pago_efectivo_window = PagoEfectivoWindow(self)
+            self.pago_efectivo_window.show()
+            return  
+
         self.fade_out()  
+       
         
     def fade_out(self):
         self.animation = QPropertyAnimation(self, b"windowOpacity")
@@ -168,6 +175,18 @@ class CajaI(QMainWindow):
         self.table.setRowCount(0)
 
 ###############################################################################################
+class PagoEfectivoWindow(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Pago en Efectivo")
+        self.setFixedSize(400, 300)
+        self.setStyleSheet("background-color: #192745;")
+        
+        # Configurar para que sea una ventana flotante
+        self.setWindowModality(Qt.WindowModality.ApplicationModal)
+        self.setWindowFlags(Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint)
+
+#########################################################################################################
 class CajaFinal(QMainWindow):
     pass
 ##############

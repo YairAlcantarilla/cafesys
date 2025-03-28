@@ -89,7 +89,7 @@ class MainWindow(QMainWindow):
                     background-color: rgba(255, 255, 255, 0);
                     border: 0px solid white;
                     border-radius: 10px;
-                    color: white;
+                    color:  rgba(255, 255, 255, 0);
             }
             QPushButton:hover {
                 background-color: rgba(255, 255, 255, 0);

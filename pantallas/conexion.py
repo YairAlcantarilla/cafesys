@@ -7,7 +7,7 @@ def conectar_db():
         conexion =mysql.connector.connect(
             host= "localhost",
             user = "root",
-            passwd="895488", #Recuerden verificar que la contraseña de su base de datos sea la correcta
+            passwd="895488",
             database="tienda"
         )
         return conexion
