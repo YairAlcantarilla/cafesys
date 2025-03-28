@@ -305,23 +305,27 @@ class AgregarE(QMainWindow):
                 return
                 
             datos = {
-                "nombre": self.inputs[0].text(),        # Nombre
-                "Direccion": self.inputs[1].text(),     # Dirección
-                "telefono": telefono,                   # Teléfono (validado)
-                "contrasenna": self.inputs[3].text(),   # Contraseña
-                "ID_Puesto": tipo_usuario              # Tipo de usuario (del radio button)
+                "nombre": self.inputs[0].text(),        
+                "Direccion": self.inputs[1].text(),     
+                "telefono": telefono,                   
+                "contrasenna": self.inputs[3].text(),   
+                "ID_Puesto": tipo_usuario              
             }
 
             if all(datos.values()):
                 try:
                     conexion.insertar_dato("usuario", datos)
                     QMessageBox.information(self, "Éxito", "Usuario agregado correctamente.")
+                    self.cambioP = MainPersonal()  # Set cambioP after successful insertion
+                    self.fade_out()
                 except Exception as e:
                     QMessageBox.critical(self, "Error", f"No se pudo agregar el usuario:\n{str(e)}")
             else:
                 QMessageBox.warning(self, "Advertencia", "Por favor completa todos los campos.")
+                return
         
-        self.fade_out()
+        if hasattr(self, 'cambioP'):  # Only call fade_out if cambioP was set
+            self.fade_out()
 
 #################################### Interfaz para eliminar empleado #######################################################
 class EliminarE(QMainWindow):

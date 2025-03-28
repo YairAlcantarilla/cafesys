@@ -141,7 +141,11 @@ def obtener_producto_por_nombre(nombre):
     try:
         conexion = conectar_db()
         cursor = conexion.cursor()
-        cursor.execute("SELECT * FROM Producto WHERE Nombre = %s", (nombre,))
+        cursor.execute("""
+            SELECT ID_Producto, Nombre, Precio, Cantidad, Categoria 
+            FROM Producto 
+            WHERE Nombre = %s
+        """, (nombre,))
         producto = cursor.fetchone()
         conexion.close()
         return producto

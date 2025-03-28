@@ -18,7 +18,7 @@ class LoginWindow(QWidget):
         self.setStyleSheet("background-color: #0D1321;")
 
         layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setAlignment  (Qt.AlignmentFlag.AlignCenter)
 
         ###################
         self.logo_label = QLabel(self)

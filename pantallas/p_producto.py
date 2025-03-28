@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
         self.table_widget.setGeometry(160, 145, 650, 555)  # x, y, width, height
         self.table_widget.setColumnCount(4)
         self.table_widget.setHorizontalHeaderLabels([
-            "Nombre", "Categoria", "Stock", "Precio"
+            "Nombre", "Categoría", "Stock", "Precio"
         ])
 
         # Estilo de la tabla
@@ -89,7 +89,7 @@ class MainWindow(QMainWindow):
                     background-color: rgba(255, 255, 255, 0);
                     border: 0px solid white;
                     border-radius: 10px;
-                    color: white;
+                    color:  rgba(255, 255, 255, 0);
             }
             QPushButton:hover {
                 background-color: rgba(255, 255, 255, 0);
@@ -111,11 +111,15 @@ class MainWindow(QMainWindow):
             self.table_widget.setRowCount(len(productos))
             
             for fila, producto in enumerate(productos):
-                # Corrección del orden de los datos
+                # producto[1] = Nombre
+                # producto[2] = Precio
+                # producto[3] = Stock/Cantidad
+                # producto[4] = Categoría
                 self.table_widget.setItem(fila, 0, QTableWidgetItem(str(producto[1])))  # Nombre
+                self.table_widget.setItem(fila, 2, QTableWidgetItem(str(producto[4])))  # Categoría
                 self.table_widget.setItem(fila, 1, QTableWidgetItem(str(producto[3])))  # Stock/Cantidad
-                self.table_widget.setItem(fila, 2, QTableWidgetItem(str(producto[2])))  # Categoria
-                self.table_widget.setItem(fila, 3, QTableWidgetItem(f"${str(producto[4])}"))  # Precio
+                self.table_widget.setItem(fila, 3, QTableWidgetItem(f"${str(producto[2])}"))  # Precio
+
         except Exception as e:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Icon.Critical)
@@ -521,19 +525,18 @@ class EditarProducto(QMainWindow):
                 from conexion import obtener_producto_por_nombre
                 producto = obtener_producto_por_nombre(self.producto_combo.currentText())
                 if producto:
-                    # Corregir el mapeo de los datos según el orden real
                     # producto[0] = ID_producto
                     # producto[1] = nombre
                     # producto[2] = precio 
-                    # producto[3] = categoria
-                    # producto[4] = cantidad
+                    # producto[3] = cantidad/stock
+                    # producto[4] = categoria
                     
-                    self.inputs[0].setText(str(producto[1]))  # Nombre
-                    self.inputs[1].setText(str(producto[2]))  # Precio
-                    self.inputs[2].setText(str(producto[4]))  # Cantidad/Stock
+                    self.inputs[0].setText(str(producto[1]))     # Nombre
+                    self.inputs[1].setText(str(producto[2]))     # Precio
+                    self.inputs[2].setText(str(producto[3]))     # Stock/Cantidad
                     
                     # Seleccionar la categoría correcta
-                    categoria = str(producto[3])  # Categoría
+                    categoria = str(producto[4])
                     index = self.categoria_combo.findText(categoria)
                     if index >= 0:
                         self.categoria_combo.setCurrentIndex(index)
