@@ -4,7 +4,7 @@ import main_p
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLineEdit
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QComboBox
 #####################################################
 class MainCombo(QMainWindow):
     def __init__(self):
@@ -89,41 +89,41 @@ class AgregarCombo(QMainWindow):
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
 
-        # fondo agregar
         background_label = QLabel(central_widget)
         pixmap = QPixmap('imagenes/agregar combo.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
-        
-        
-        input_configs = [
-            [".", 593, 196, 321, 38],
-            [".", 593, 276, 321, 38],
-            [".", 593, 360, 321, 38],
-            [".", 593, 454, 321, 38],
-            [".", 944, 198, 237, 38],
-               
-        ]
 
-        self.inputs = []
-        for placeholder, x, y, width, height in input_configs:
-            input_field = QLineEdit(self)
-            input_field.setPlaceholderText(placeholder)  # Texto de referencia dentro del campo
-            input_field.setFixedSize(width, height)
-            input_field.move(x, y)
-            input_field.setStyleSheet("""
-                QLineEdit {
-                    border: 1px solid #E6AA68;
-                    border-radius: 10px;
-                    padding: 5px;
-                    font-size: 14px;
-                    background-color: #111A2D;
-                    color: #E6AA68;
-                }
-            """)
-            self.inputs.append(input_field)
+        # Campos de entrada
+        self.nombre_combo = QLineEdit(self)
+        self.nombre_combo.setPlaceholderText("Nombre del combo")
+        self.nombre_combo.setFixedSize(321, 38)
+        self.nombre_combo.move(593, 196)
+        self.nombre_combo.setStyleSheet(self.estilo_line_edit())
+        
+        self.precio_combo = QLineEdit(self)
+        self.precio_combo.setPlaceholderText("Precio del combo")
+        self.precio_combo.setFixedSize(321, 38)
+        self.precio_combo.move(593, 451)
+        self.precio_combo.setStyleSheet(self.estilo_line_edit())
+
+
+        # ComboBox para productos
+        self.producto1_combo = QComboBox(self)
+        self.producto1_combo.setFixedSize(321, 38)
+        self.producto1_combo.move(593, 276)
+        self.producto1_combo.setStyleSheet(self.estilo_combo_box())
+
+        self.producto2_combo = QComboBox(self)
+        self.producto2_combo.setFixedSize(321, 38)
+        self.producto2_combo.move(593, 360)
+        self.producto2_combo.setStyleSheet(self.estilo_combo_box())
+
+        self.cargar_productos()
+
+        # Botones
         button_configs = [
             ["Regresar", 1270, 655, 77, 70],
             ["Confirmar", 798, 554, 227, 78],
@@ -133,12 +133,49 @@ class AgregarCombo(QMainWindow):
             button = QPushButton(name, self)
             button.setFixedSize(width, height)
             button.move(x, y)
-            button.setStyleSheet("""
-                QPushButton {
-                    background-color: rgba(255, 255, 255, 0);
-                    border: 0px solid white;
-                    border-radius: 10px;
-                    color: transparent;
+            button.setStyleSheet(self.estilo_boton())
+            self.buttons.append(button)
+            button.clicked.connect(self.button_clicked)
+
+    def estilo_line_edit(self):
+        return """
+            QLineEdit {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                font-size: 14px;
+                background-color: #111A2D;
+                color: #E6AA68;
+            }
+        """
+
+    def estilo_combo_box(self):
+        return """
+            QComboBox {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                font-size: 14px;
+                background-color: #111A2D;
+                color: #E6AA68;
+            }
+            QComboBox::drop-down { border: none; }
+            QComboBox::down-arrow { image: none; }
+            QComboBox QAbstractItemView {
+                background-color: #111A2D;
+                color: #E6AA68;
+                selection-background-color: #E6AA68;
+                selection-color: #111A2D;
+            }
+        """
+
+    def estilo_boton(self):
+        return """
+            QPushButton {
+                background-color: rgba(255, 255, 255, 0);
+                border: 0px solid white;
+                border-radius: 10px;
+                color: transparent;
             }
             QPushButton:hover {
                 background-color: rgba(255, 255, 255, 0);
@@ -146,17 +183,47 @@ class AgregarCombo(QMainWindow):
             QPushButton:pressed {
                 background-color: rgba(230, 170, 104, 80);
             }
-        """)
-            self.buttons.append(button)
-        for button in self.buttons:
-            button.clicked.connect(self.button_clicked)
+        """
+
+    def cargar_productos(self):
+        try:
+            from conexion import mostrar_productos
+            productos = mostrar_productos()
+            for producto in productos:
+                self.producto1_combo.addItem(producto[1])
+                self.producto2_combo.addItem(producto[1])
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar productos: {str(e)}")
+
     def button_clicked(self):
         button = self.sender()
         if button.text() == "Regresar":
-            self.main_window = MainCombo()  
+            self.main_window = MainCombo()
             self.main_window.show()
-            self.close() 
- ###########################################################################################       
+            self.close()
+        elif button.text() == "Confirmar":
+            self.confirmar_combo()
+
+    def confirmar_combo(self):
+        nombre_combo = self.nombre_combo.text()
+        producto1 = self.producto1_combo.currentText()
+        producto2 = self.producto2_combo.currentText()
+
+        if not nombre_combo or producto1 == producto2:
+            QMessageBox.warning(self, "Advertencia", "Por favor ingrese un nombre válido y seleccione productos distintos.")
+            return
+
+        try:
+            from conexion import agregar_combo
+            agregar_combo(nombre_combo, producto1, producto2)
+            QMessageBox.information(self, "Éxito", "Combo agregado correctamente.")
+            self.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al agregar combo: {str(e)}")
+
+ ###########################################################################################
+
+###########################################################################################       
 class EliminarCombo(QMainWindow):
     def __init__(self):
         super().__init__()
