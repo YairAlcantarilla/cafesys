@@ -1,5 +1,7 @@
 import mysql.connector
 from PyQt6.QtWidgets import QMessageBox
+import qrcode
+import os
 
 
 def conectar_db():
@@ -187,6 +189,7 @@ def verificar_credenciales(ID_usuario, contrasenna):
         conexion = conectar_db()
         cursor = conexion.cursor()
         
+        # Consulta modificada para seleccionar los campos específicos
         consulta = """
             SELECT ID_usuario, Nombre, ID_Puesto 
             FROM usuario 
@@ -195,7 +198,10 @@ def verificar_credenciales(ID_usuario, contrasenna):
         cursor.execute(consulta, (ID_usuario, contrasenna))
         resultado = cursor.fetchone()
         
-        print("Resultado de la consulta:", resultado)
+        # Agregar print para debug
+        print(f"Consulta SQL: {consulta}")
+        print(f"Parámetros: ID_usuario={ID_usuario}, contraseña={contrasenna}")
+        print(f"Resultado de la consulta: {resultado}")
         
         cursor.close()
         conexion.close()
@@ -203,5 +209,60 @@ def verificar_credenciales(ID_usuario, contrasenna):
         return resultado
         
     except Exception as e:
-        print(f"Error al verificar credenciales: {e}")
+        print(f"Error en verificar_credenciales: {e}")
+        return None
+
+def generar_qr_usuario(id_usuario, contrasenna):
+    try:
+        # Crear directorio si no existe
+        qr_dir = "./qr_codes"
+        if not os.path.exists(qr_dir):
+            os.makedirs(qr_dir)
+
+        # Crear los datos en formato "usuario:contraseña"
+        datos = f"{id_usuario}:{contrasenna}"
+        
+        # Generar QR
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(datos)
+        qr.make(fit=True)
+
+        # Crear imagen
+        qr_image = qr.make_image(fill_color="black", back_color="white")
+        
+        # Guardar imagen
+        qr_path = f"{qr_dir}/usuario_{id_usuario}.png"
+        qr_image.save(qr_path)
+        return qr_path
+        
+    except Exception as e:
+        print(f"Error al generar QR: {e}")
+        return None
+
+def obtener_datos_usuario(ID_usuario):
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        
+        # Consulta para obtener los datos necesarios
+        consulta = """
+            SELECT ID_usuario, contrasenna, Nombre, ID_Puesto 
+            FROM usuario 
+            WHERE ID_usuario = %s
+        """
+        cursor.execute(consulta, (ID_usuario,))
+        resultado = cursor.fetchone()
+        
+        cursor.close()
+        conexion.close()
+        
+        return resultado
+        
+    except Exception as e:
+        print(f"Error al obtener datos del usuario: {e}")
         return None

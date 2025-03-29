@@ -6,7 +6,7 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout, 
                            QWidget, QPushButton, QGraphicsOpacityEffect, QLineEdit,
                            QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox,
-                           QRadioButton, QButtonGroup)
+                           QRadioButton, QButtonGroup, QComboBox)
 #################################### Interfaz principal de personal #######################################################
 
 class MainPersonal(QMainWindow):
@@ -65,12 +65,11 @@ class MainPersonal(QMainWindow):
         self.cargar_datos()
 
         button_configs = [
-            #otrosbotones
             ["AgregarE", 875, 144, 344, 55],
             ["EliminarE", 875, 225, 344, 55],
             ["EditarE", 875, 306, 344, 55],
+            ["GenerarQR", 875, 387, 344, 55],
             ["RegresarE", 1270, 655, 77, 70],
-            
         ]
 
         self.buttons = []
@@ -126,8 +125,10 @@ class MainPersonal(QMainWindow):
             self.cambioP = EliminarE()
         elif button.text() == "EditarE":
             self.cambioP = EditarE()
+        elif button.text() == "GenerarQR":
+            self.cambioP = GenerarQR()
         elif button.text() == "RegresarE":
-            self.cambioP = p_inicio.MainWindow()  
+            self.cambioP = p_inicio.MainWindow()
 
         self.fade_out()  
         
@@ -315,8 +316,22 @@ class AgregarE(QMainWindow):
             if all(datos.values()):
                 try:
                     conexion.insertar_dato("usuario", datos)
-                    QMessageBox.information(self, "Éxito", "Usuario agregado correctamente.")
-                    self.cambioP = MainPersonal()  # Set cambioP after successful insertion
+                    # Generar QR después de insertar usuario
+                    new_id = conexion.get_next_id("usuario", "ID_usuario") - 1
+                    qr_path = conexion.generar_qr_usuario(new_id, datos["contrasenna"])
+                    if qr_path:
+                        QMessageBox.information(
+                            self, 
+                            "Éxito", 
+                            f"Usuario agregado correctamente.\nCódigo QR generado en: {qr_path}"
+                        )
+                    else:
+                        QMessageBox.warning(
+                            self, 
+                            "Advertencia", 
+                            "Usuario agregado pero no se pudo generar el código QR"
+                        )
+                    self.cambioP = MainPersonal()
                     self.fade_out()
                 except Exception as e:
                     QMessageBox.critical(self, "Error", f"No se pudo agregar el usuario:\n{str(e)}")
@@ -623,7 +638,155 @@ class ListaE(QMainWindow):
         self.new_animation.start()
         self.close()
 
-#################################### Interfaz para ver lista empleado #######################################################
+#################################### Interfaz para generar QR #######################################################
+class GenerarQR(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Generar QR")
+        self.setFixedSize(1366, 768)
+
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+        
+        # Fondo
+        background_label = QLabel(central_widget)
+        pixmap = QPixmap('imagenes/Mpersonal.png')  # Use existing or new background
+        background_label.setPixmap(pixmap)
+        background_label.setScaledContents(True)
+        
+        # Layout
+        layout = QVBoxLayout(central_widget)
+        layout.addWidget(background_label)
+
+        # Combo box para seleccionar usuario
+        self.usuario_combo = QComboBox(self)
+        self.usuario_combo.setGeometry(598, 194, 317, 40)
+        self.usuario_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                background-color: #111A2D;
+                color: #E6AA68;
+            }
+            QComboBox::drop-down {
+                border: none;
+            }
+            QComboBox::down-arrow {
+                image: url(./imagenes/dropdown_arrow.png);
+                width: 12px;
+                height: 12px;
+            }
+        """)
+        self.cargar_usuarios()
+
+        # Botones
+        button_configs = [
+            ["Generar QR", 810, 554, 227, 78],
+            ["Regresar", 1270, 655, 77, 70],
+        ]
+
+        self.buttons = []
+        for name, x, y, width, height in button_configs:
+            button = QPushButton(name, self)
+            button.setFixedSize(width, height)
+            button.move(x, y)
+            if name == "Generar QR":
+                button.setStyleSheet("""
+                    QPushButton {
+                        background-color: #111A2D;
+                        border: 2px solid #E6AA68;
+                        border-radius: 10px;
+                        color: #E6AA68;
+                        font-weight: bold;
+                    }
+                    QPushButton:hover {
+                        background-color: #E6AA68;
+                        color: #111A2D;
+                    }
+                    QPushButton:pressed {
+                        background-color: #8B6B42;
+                    }
+                """)
+            else:
+                button.setStyleSheet("""
+                    QPushButton {
+                        background-color: rgba(255, 255, 255, 0);
+                        border: 0px solid white;
+                        border-radius: 10px;
+                        color: transparent;
+                    }
+                    QPushButton:hover {
+                        background-color: rgba(255, 255, 255, 0);
+                    }
+                    QPushButton:pressed {
+                        background-color: rgba(230, 170, 104, 80);
+                    }
+                """)
+            button.clicked.connect(self.button_clicked)
+            self.buttons.append(button)
+
+    def cargar_usuarios(self):
+        try:
+            from conexion import mostrar_usuarios
+            usuarios = mostrar_usuarios()
+            self.usuario_combo.addItem("Seleccionar usuario")
+            for usuario in usuarios:
+                self.usuario_combo.addItem(f"{usuario[0]} - {usuario[2]}")  # ID - Nombre
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar usuarios: {str(e)}")
+
+    def button_clicked(self):
+        button = self.sender()
+        if button.text() == "Regresar":
+            self.cambioP = MainPersonal()
+            self.fade_out()
+        elif button.text() == "Generar QR":
+            if self.usuario_combo.currentText() != "Seleccionar usuario":
+                try:
+                    id_usuario = self.usuario_combo.currentText().split(" - ")[0]
+                    from conexion import obtener_datos_usuario
+                    datos_usuario = obtener_datos_usuario(id_usuario)
+                    
+                    if datos_usuario:
+                        # datos_usuario[0] = ID_usuario
+                        # datos_usuario[1] = contrasenna
+                        qr_path = conexion.generar_qr_usuario(datos_usuario[0], datos_usuario[1])
+                        if qr_path:
+                            QMessageBox.information(
+                                self,
+                                "Éxito",
+                                f"Código QR generado en: {qr_path}"
+                            )
+                        else:
+                            QMessageBox.warning(self, "Error", "No se pudo generar el código QR")
+                    else:
+                        QMessageBox.warning(self, "Error", "No se encontraron datos del usuario")
+                except Exception as e:
+                    print(f"Error al generar QR: {e}")  # Para debug
+                    QMessageBox.critical(self, "Error", f"Error al generar QR: {str(e)}")
+            else:
+                QMessageBox.warning(self, "Advertencia", "Por favor seleccione un usuario")
+
+    def fade_out(self):
+        self.animation = QPropertyAnimation(self, b"windowOpacity")
+        self.animation.setDuration(150) 
+        self.animation.setStartValue(1.0)  
+        self.animation.setEndValue(0.0)  
+        self.animation.finished.connect(self.open_new_window) 
+        self.animation.start()
+
+    def open_new_window(self):
+        self.cambioP.setWindowOpacity(0.0)  
+        self.cambioP.show()
+        self.new_animation = QPropertyAnimation(self.cambioP, b"windowOpacity")
+        self.new_animation.setDuration(150)  
+        self.new_animation.setStartValue(0.0)  
+        self.new_animation.setEndValue(1.0)  
+        self.new_animation.start()
+        self.close()
+
+#################################### Main Application #######################################################
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
