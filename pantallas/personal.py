@@ -1,12 +1,12 @@
-import p_inicio
 import sys
 import conexion
+import p_inicio
 from PyQt6.QtCore import Qt, QPropertyAnimation
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout, 
                            QWidget, QPushButton, QGraphicsOpacityEffect, QLineEdit,
                            QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox,
-                           QRadioButton, QButtonGroup, QComboBox)
+                           QRadioButton, QButtonGroup, QGridLayout, QComboBox)
 #################################### Interfaz principal de personal #######################################################
 
 class MainPersonal(QMainWindow):
@@ -68,7 +68,7 @@ class MainPersonal(QMainWindow):
             ["AgregarE", 875, 144, 344, 55],
             ["EliminarE", 875, 225, 344, 55],
             ["EditarE", 875, 306, 344, 55],
-            ["GenerarQR", 875, 387, 344, 55],
+            ["GenerarQR", 875, 387, 344, 55],  # New QR button
             ["RegresarE", 1270, 655, 77, 70],
         ]
 
@@ -120,17 +120,20 @@ class MainPersonal(QMainWindow):
     def button_clicked(self):
         button = self.sender()
         if button.text() == "AgregarE":
-            self.cambioP = AgregarE()
+            self.agregar_window = AgregarE()
+            self.agregar_window.show()
         elif button.text() == "EliminarE":
-            self.cambioP = EliminarE()
+            self.eliminar_window = EliminarE()
+            self.eliminar_window.show()
         elif button.text() == "EditarE":
-            self.cambioP = EditarE()
+            self.editar_window = EditarE()
+            self.editar_window.show()
         elif button.text() == "GenerarQR":
-            self.cambioP = GenerarQR()
+            self.qr_window = GenerarQR()
+            self.qr_window.show()
         elif button.text() == "RegresarE":
             self.cambioP = p_inicio.MainWindow()
-
-        self.fade_out()  
+            self.fade_out()
         
     def fade_out(self):
         self.animation = QPropertyAnimation(self, b"windowOpacity")
@@ -157,12 +160,12 @@ class AgregarE(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Pantalla de Inicio")
-        self.setFixedSize(1366, 768)
+        self.setFixedSize(500, 650)
 
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
         background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/Apersonal.png')
+        pixmap = QPixmap('imagenes/ADDPER.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
@@ -170,10 +173,10 @@ class AgregarE(QMainWindow):
 
         # Modificar input_configs para quitar el campo de ocupación
         input_configs = [
-            ["Nombre", 598, 194, 317, 40],
-            ["Direccion", 598, 369, 317, 40],
-            ["Telefono", 964, 194, 250, 40], 
-            ["Contraseña", 964, 369, 250, 40] 
+            ["Nombre", 195, 152, 270, 40],
+            ["Direccion", 195, 225, 270, 40],
+            ["Telefono", 195, 298, 270, 40], 
+            ["Contraseña", 195, 371, 270, 40] 
         ]
 
         self.inputs = []
@@ -199,7 +202,7 @@ class AgregarE(QMainWindow):
         
         # Radio button para Administrador
         self.admin_radio = QRadioButton("Administrador", self)
-        self.admin_radio.move(598, 284)  # Mover a la posición del input eliminado
+        self.admin_radio.move(195, 446)  # Mover a la posición del input eliminado
         self.admin_radio.setStyleSheet("""
             QRadioButton {
                 color: #E6AA68;
@@ -219,7 +222,7 @@ class AgregarE(QMainWindow):
         
         # Radio button para Cajero
         self.cajero_radio = QRadioButton("Cajero", self)
-        self.cajero_radio.move(720, 284)  # 30 píxeles debajo del radio de administrador
+        self.cajero_radio.move(350, 446)  # 30 píxeles debajo del radio de administrador
         self.cajero_radio.setStyleSheet("""
             QRadioButton {
                 color: #E6AA68;
@@ -242,8 +245,8 @@ class AgregarE(QMainWindow):
         self.tipo_usuario_group.addButton(self.cajero_radio)
 
         button_configs = [
-            ["Regresar", 1270, 655, 77, 70],
-            ["Confirmar", 810, 554, 227, 78],
+            ["Confirmar", 122, 547, 100, 60],  # Movido a la izquierda
+            ["Regresar", 279, 547, 100, 60],   # Movido a la derecha
         ]
         self.buttons = []
         for name, x, y, width, height in button_configs:
@@ -252,7 +255,7 @@ class AgregarE(QMainWindow):
             button.move(x, y)
             button.setStyleSheet("""
                 QPushButton {
-                    background-color: rgba(255, 255, 255, 0);
+                    background-color: rgba(255, 255, 255, 70);
                     border: 0px solid white;
                     border-radius: 10px;
                     color: transparent;
@@ -291,7 +294,7 @@ class AgregarE(QMainWindow):
     def button_clicked(self):
         button = self.sender()
         if button.text() == "Regresar":
-            self.cambioP = MainPersonal()     
+            self.close()
         elif button.text() == "Confirmar":
             tipo_usuario = 1 if self.admin_radio.isChecked() else 2 if self.cajero_radio.isChecked() else None
             
@@ -316,95 +319,56 @@ class AgregarE(QMainWindow):
             if all(datos.values()):
                 try:
                     conexion.insertar_dato("usuario", datos)
-                    # Generar QR después de insertar usuario
-                    new_id = conexion.get_next_id("usuario", "ID_usuario") - 1
-                    qr_path = conexion.generar_qr_usuario(new_id, datos["contrasenna"])
-                    if qr_path:
-                        QMessageBox.information(
-                            self, 
-                            "Éxito", 
-                            f"Usuario agregado correctamente.\nCódigo QR generado en: {qr_path}"
-                        )
-                    else:
-                        QMessageBox.warning(
-                            self, 
-                            "Advertencia", 
-                            "Usuario agregado pero no se pudo generar el código QR"
-                        )
-                    self.cambioP = MainPersonal()
-                    self.fade_out()
+                    # Update main window if it exists
+                    for widget in QApplication.topLevelWidgets():
+                        if isinstance(widget, MainPersonal):
+                            widget.cargar_datos()
+                    QMessageBox.information(self, "Éxito", "Usuario agregado correctamente")
+                    self.close()
                 except Exception as e:
                     QMessageBox.critical(self, "Error", f"No se pudo agregar el usuario:\n{str(e)}")
             else:
                 QMessageBox.warning(self, "Advertencia", "Por favor completa todos los campos.")
-                return
-        
-        if hasattr(self, 'cambioP'):  # Only call fade_out if cambioP was set
-            self.fade_out()
-
 #################################### Interfaz para eliminar empleado #######################################################
 class EliminarE(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("Eliminar usuario")
-        self.setFixedSize(1366, 768)
+        self.setFixedSize(400, 500)
 
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
         background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/Epersonal.png')
+        pixmap = QPixmap('imagenes/ELIMU.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
 
-        # Crear la tabla
-        self.table_widget = QTableWidget(self)
-        self.table_widget.setGeometry(160, 145, 650, 555)
-        self.table_widget.setColumnCount(6)
-        self.table_widget.setHorizontalHeaderLabels([
-            "ID", "Contraseña", "Nombre", "Teléfono", "Dirección", "ID Puesto"
-        ])
-
-        # Estilo de la tabla
-        self.table_widget.setStyleSheet("""
-            QTableWidget {
-                background-color: #111A2D;
+        # Agregar ComboBox para seleccionar usuario
+        self.usuario_combo = QComboBox(self)
+        self.usuario_combo.setGeometry(74, 200, 252, 40)  # Ajusta estas coordenadas según necesites
+        self.usuario_combo.setStyleSheet("""
+            QComboBox {
                 border: 1px solid #E6AA68;
                 border-radius: 10px;
-                color: #E6AA68;
-                gridline-color: #E6AA68;
-            }
-            QHeaderView::section {
+                padding: 5px;
                 background-color: #111A2D;
                 color: #E6AA68;
-                border: 1px solid #E6AA68;
-                padding: 5px;
             }
-            QTableWidget::item {
-                border: 1px solid #E6AA68;
-                padding: 5px;
+            QComboBox::drop-down {
+                border: none;
+            }
+            QComboBox::down-arrow {
+                image: none;
             }
         """)
-
-        # Ajustar el ancho de las columnas
-        header = self.table_widget.horizontalHeader()
-        for i in range(6):
-            header.setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
-
-        # Cargar datos
-        self.cargar_datos()
-        
-        # Variable para almacenar el ID seleccionado
-        self.id_seleccionado = None
-        
-        # Conectar el evento de selección
-        self.table_widget.itemSelectionChanged.connect(self.on_selection_changed)
+        self.cargar_usuarios()
 
         button_configs = [
-            ["Regresar", 1270, 655, 77, 70],
-            ["Confirmar", 810, 554, 227, 78],  # Button for deletion
+            ["Eliminar", 74, 402, 97, 61],
+            ["Regresar", 229, 402, 97, 61],
         ]
 
         self.buttons = []
@@ -414,7 +378,7 @@ class EliminarE(QMainWindow):
             button.move(x, y)
             button.setStyleSheet("""
                 QPushButton {
-                    background-color: rgba(255, 255, 255, 0);
+                    background-color: rgba(255, 255, 255, 80);
                     border: 0px solid white;
                     border-radius: 10px;
                     color: transparent;
@@ -431,49 +395,67 @@ class EliminarE(QMainWindow):
         for button in self.buttons:
             button.clicked.connect(self.button_clicked)
 
-    def cargar_datos(self):
+    def cargar_usuarios(self):
         try:
-            from conexion import mostrar_usuarios
-            usuarios = mostrar_usuarios()
-            
-            self.table_widget.setRowCount(len(usuarios))
-            
-            for fila, usuario in enumerate(usuarios):
-                self.table_widget.setItem(fila, 0, QTableWidgetItem(str(usuario[0])))  # ID
-                self.table_widget.setItem(fila, 1, QTableWidgetItem('*****'))          # Contraseña oculta
-                self.table_widget.setItem(fila, 2, QTableWidgetItem(str(usuario[2])))  # Nombre
-                self.table_widget.setItem(fila, 3, QTableWidgetItem(str(usuario[3])))  # Teléfono
-                self.table_widget.setItem(fila, 4, QTableWidgetItem(str(usuario[4])))  # Dirección
-                self.table_widget.setItem(fila, 5, QTableWidgetItem(str(usuario[5])))  # ID_Puesto
+            usuarios = conexion.mostrar_usuarios()
+            self.usuario_combo.addItem("Seleccionar usuario")
+            for usuario in usuarios:
+                self.usuario_combo.addItem(f"{usuario[0]} - {usuario[2]}")  # ID - Nombre
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error al cargar los usuarios: {str(e)}")
-
-    def on_selection_changed(self):
-        selected_items = self.table_widget.selectedItems()
-        if selected_items:
-            self.id_seleccionado = self.table_widget.item(selected_items[0].row(), 0).text()
+            QMessageBox.critical(self, "Error", f"Error al cargar usuarios: {str(e)}")
 
     def button_clicked(self):
         button = self.sender()
         if button.text() == "Regresar":
-            self.cambioP = MainPersonal()
-            self.fade_out()
-        elif button.text() == "Confirmar":
-            if self.id_seleccionado:
-                reply = QMessageBox.question(self, 'Confirmación', 
-                                          '¿Está seguro de eliminar este usuario?',
-                                          QMessageBox.StandardButton.Yes | 
-                                          QMessageBox.StandardButton.No)
-                
-                if reply == QMessageBox.StandardButton.Yes:
-                    try:
-                        from conexion import eliminar_usuario
-                        eliminar_usuario(self.id_seleccionado)
+            self.close()
+        elif button.text() == "Eliminar":
+            if self.usuario_combo.currentText() != "Seleccionar usuario":
+                try:
+                    id_usuario = self.usuario_combo.currentText().split(" - ")[0]
+                    # Get all users first to check administrators
+                    usuarios = conexion.mostrar_usuarios()
+                    
+                    # Find the current user's data from the list
+                    usuario_actual = None
+                    for usuario in usuarios:
+                        if str(usuario[0]) == id_usuario:
+                            usuario_actual = usuario
+                            break
+                    
+                    if usuario_actual is None:
+                        QMessageBox.warning(self, "Error", "Usuario no encontrado")
+                        return
+                    
+                    # Check if trying to delete an admin
+                    if usuario_actual[5] == 1:  # ID_Puesto = 1 for admin
+                        # Count total admins
+                        count_admin = sum(1 for user in usuarios if user[5] == 1)
+                        
+                        if count_admin <= 1:
+                            QMessageBox.warning(
+                                self, 
+                                "Advertencia", 
+                                "No se puede eliminar el usuario. Debe haber al menos un administrador en el sistema."
+                            )
+                            return
+
+                    reply = QMessageBox.question(
+                        self, 
+                        'Confirmación',
+                        '¿Está seguro de eliminar este usuario?',
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                    )
+                    
+                    if reply == QMessageBox.StandardButton.Yes:
+                        conexion.eliminar_usuario(id_usuario)
                         QMessageBox.information(self, "Éxito", "Usuario eliminado correctamente")
-                        self.cambioP = MainPersonal()
-                        self.fade_out()
-                    except Exception as e:
-                        QMessageBox.critical(self, "Error", f"No se pudo eliminar el usuario: {str(e)}")
+                        self.cargar_usuarios()  # Reload users list
+                        # Update main window if it exists
+                        for widget in QApplication.topLevelWidgets():
+                            if isinstance(widget, MainPersonal):
+                                widget.cargar_datos()
+                except Exception as e:
+                    QMessageBox.critical(self, "Error", f"No se pudo eliminar el usuario: {str(e)}")
             else:
                 QMessageBox.warning(self, "Advertencia", "Por favor seleccione un usuario para eliminar")
         
@@ -502,20 +484,107 @@ class EditarE(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Editar usuario")
-        self.setFixedSize(1366, 768)
+        self.setFixedSize(500, 650)
 
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
         background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/EDpersonal .png')
+        pixmap = QPixmap('imagenes/EDITP2.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
-    #**********************************************************************
+
+        # Dropdown para seleccionar usuario
+        self.usuario_combo = QComboBox(self)
+        self.usuario_combo.setGeometry(195, 152, 270, 40)
+        self.usuario_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                background-color: #111A2D;
+                color: #E6AA68;
+            }
+            QComboBox::drop-down {
+                border: none;
+            }
+        """)
+        self.cargar_usuarios()
+        self.usuario_combo.currentIndexChanged.connect(self.usuario_seleccionado)
+
+        # Campos de entrada
+        input_configs = [
+            ["Direccion", 195, 225, 270, 40],
+            ["Telefono", 195, 298, 270, 40], 
+            ["Contraseña", 195, 371, 270, 40] 
+        ]
+
+        self.inputs = []
+        for placeholder, x, y, width, height in input_configs:
+            input_field = QLineEdit(self)
+            input_field.setPlaceholderText(placeholder)  
+            input_field.setFixedSize(width, height)
+            input_field.move(x, y)
+            input_field.setStyleSheet("""
+                QLineEdit {
+                    border: 1px solid #E6AA68;
+                    border-radius: 10px;
+                    padding: 5px;
+                    font-size: 14px;
+                    background-color: #111A2D;
+                    color: #E6AA68;
+                }
+            """)
+            self.inputs.append(input_field)
+        
+        # Radio buttons para tipo de usuario
+        self.tipo_usuario_group = QButtonGroup(self)
+        
+        self.admin_radio = QRadioButton("Administrador", self)
+        self.admin_radio.move(195, 446)
+        self.admin_radio.setStyleSheet("""
+            QRadioButton {
+                color: #E6AA68;
+                font-size: 14px;
+            }
+            QRadioButton::indicator {
+                width: 15px;
+                height: 15px;
+                border: 2px solid #E6AA68;
+                border-radius: 8px;
+            }
+            QRadioButton::indicator:checked {
+                background-color: #E6AA68;
+                border: 2px solid #E6AA68;
+            }
+        """)
+        
+        self.cajero_radio = QRadioButton("Cajero", self)
+        self.cajero_radio.move(350, 446)
+        self.cajero_radio.setStyleSheet("""
+            QRadioButton {
+                color: #E6AA68;
+                font-size: 14px;
+            }
+            QRadioButton::indicator {
+                width: 15px;
+                height: 15px;
+                border: 2px solid #E6AA68;
+                border-radius: 8px;
+            }
+            QRadioButton::indicator:checked {
+                background-color: #E6AA68;
+                border: 2px solid #E6AA68;
+            }
+        """)
+        
+        self.tipo_usuario_group.addButton(self.admin_radio)
+        self.tipo_usuario_group.addButton(self.cajero_radio)
+
         button_configs = [
-            ["Regresar", 1270, 655, 77, 70],
-            
+            ["Confirmar", 122, 547, 100, 60],
+            ["Regresar", 279, 547, 100, 60],
         ]
 
         self.buttons = []
@@ -525,47 +594,113 @@ class EditarE(QMainWindow):
             button.move(x, y)
             button.setStyleSheet("""
                 QPushButton {
-                    background-color: rgba(255, 255, 255, 0);
+                    background-color: rgba(255, 255, 255, 70);
                     border: 0px solid white;
                     border-radius: 10px;
                     color: transparent;
-            }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0);
-            }
-            QPushButton:pressed {
-                background-color: rgba(230, 170, 104, 80);
-            }
-        """)
+                }
+                QPushButton:hover {
+                    background-color: rgba(255, 255, 255, 0);
+                }
+                QPushButton:pressed {
+                    background-color: rgba(230, 170, 104, 80);
+                }
+            """)
             self.buttons.append(button)
         
         for button in self.buttons:
             button.clicked.connect(self.button_clicked)
 
+    def cargar_usuarios(self):
+        try:
+            usuarios = conexion.mostrar_usuarios()
+            self.usuario_combo.addItem("Seleccionar usuario")
+            for usuario in usuarios:
+                self.usuario_combo.addItem(f"{usuario[0]} - {usuario[2]}")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar usuarios: {str(e)}")
+
+    def usuario_seleccionado(self):
+        if self.usuario_combo.currentText() != "Seleccionar usuario":
+            try:
+                id_usuario = self.usuario_combo.currentText().split(" - ")[0]
+                usuarios = conexion.mostrar_usuarios()
+                
+                # Find the selected user in the list
+                usuario_actual = None
+                for usuario in usuarios:
+                    if str(usuario[0]) == id_usuario:
+                        usuario_actual = usuario
+                        break
+                
+                if usuario_actual:
+                    self.inputs[0].setText(str(usuario_actual[4]))  # Dirección
+                    self.inputs[1].setText(str(usuario_actual[3]))  # Teléfono
+                    self.inputs[2].setText(str(usuario_actual[1]))  # Contraseña
+                    
+                    # Seleccionar el radio button correspondiente
+                    if usuario_actual[5] == 1:  # ID_Puesto
+                        self.admin_radio.setChecked(True)
+                    else:
+                        self.cajero_radio.setChecked(True)
+                else:
+                    QMessageBox.warning(self, "Error", "Usuario no encontrado")
+                    
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Error al cargar datos del usuario: {str(e)}")
+
     def button_clicked(self):
         button = self.sender()
         if button.text() == "Regresar":
-            self.cambioP = MainPersonal()
+            self.close()
+        elif button.text() == "Confirmar":
+            if self.usuario_combo.currentText() == "Seleccionar usuario":
+                QMessageBox.warning(self, "Advertencia", "Por favor seleccione un usuario")
+                return
 
-        self.fade_out()  
-        
-    def fade_out(self):
-        self.animation = QPropertyAnimation(self, b"windowOpacity")
-        self.animation.setDuration(150) 
-        self.animation.setStartValue(1.0)  
-        self.animation.setEndValue(0.0)  
-        self.animation.finished.connect(self.open_new_window) 
-        self.animation.start()
+            tipo_usuario = 1 if self.admin_radio.isChecked() else 2
 
-    def open_new_window(self):
-        self.cambioP.setWindowOpacity(0.0)  
-        self.cambioP.show()
-        self.new_animation = QPropertyAnimation(self.cambioP, b"windowOpacity")
-        self.new_animation.setDuration(150)  
-        self.new_animation.setStartValue(0.0)  
-        self.new_animation.setEndValue(1.0)  
-        self.new_animation.start()
-        self.close()
+            # Validar teléfono
+            telefono = self.inputs[1].text()
+            if not telefono.isdigit() or len(telefono) > 10:
+                QMessageBox.warning(self, "Advertencia", "El teléfono debe contener solo números y máximo 10 dígitos")
+                return
+
+            try:
+                id_usuario = self.usuario_combo.currentText().split(" - ")[0]
+                datos = {
+                    "Direccion": self.inputs[0].text(),
+                    "telefono": telefono,
+                    "contrasenna": self.inputs[2].text(),
+                    "ID_Puesto": tipo_usuario
+                }
+
+                if all(datos.values()):
+                    # Verificar si es el último administrador
+                    if tipo_usuario == 2:  # Si está cambiando a cajero
+                        usuarios = conexion.mostrar_usuarios()
+                        count_admin = sum(1 for user in usuarios if user[5] == 1)
+                        usuario_actual = next((user for user in usuarios if str(user[0]) == id_usuario), None)
+                        
+                        if usuario_actual and usuario_actual[5] == 1 and count_admin <= 1:
+                            QMessageBox.warning(
+                                self, 
+                                "Advertencia", 
+                                "No se puede cambiar el rol. Debe haber al menos un administrador en el sistema."
+                            )
+                            return
+
+                    conexion.actualizar_usuario(id_usuario, datos)
+                    QMessageBox.information(self, "Éxito", "Usuario actualizado correctamente")
+                    # Actualizar ventana principal
+                    for widget in QApplication.topLevelWidgets():
+                        if isinstance(widget, MainPersonal):
+                            widget.cargar_datos()
+                    self.close()
+                else:
+                    QMessageBox.warning(self, "Advertencia", "Por favor complete todos los campos")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Error al actualizar usuario: {str(e)}")
 
  #################################### Interfaz para ver lista empleado #######################################################
 class ListaE(QMainWindow):
@@ -643,24 +778,21 @@ class GenerarQR(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Generar QR")
-        self.setFixedSize(1366, 768)
+        self.setFixedSize(500, 650)
 
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
         
-        # Fondo
         background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/Mpersonal.png')  # Use existing or new background
+        pixmap = QPixmap('imagenes/ADDPER.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         
-        # Layout
         layout = QVBoxLayout(central_widget)
         layout.addWidget(background_label)
 
-        # Combo box para seleccionar usuario
         self.usuario_combo = QComboBox(self)
-        self.usuario_combo.setGeometry(598, 194, 317, 40)
+        self.usuario_combo.setGeometry(195, 152, 270, 40)
         self.usuario_combo.setStyleSheet("""
             QComboBox {
                 border: 1px solid #E6AA68;
@@ -672,18 +804,12 @@ class GenerarQR(QMainWindow):
             QComboBox::drop-down {
                 border: none;
             }
-            QComboBox::down-arrow {
-                image: url(./imagenes/dropdown_arrow.png);
-                width: 12px;
-                height: 12px;
-            }
         """)
         self.cargar_usuarios()
 
-        # Botones
         button_configs = [
-            ["Generar QR", 810, 554, 227, 78],
-            ["Regresar", 1270, 655, 77, 70],
+            ["Generar QR", 122, 547, 100, 60],  # Swapped position with Regresar
+            ["Regresar", 279, 547, 100, 60],    # Swapped position with Generar QR
         ]
 
         self.buttons = []
@@ -691,102 +817,71 @@ class GenerarQR(QMainWindow):
             button = QPushButton(name, self)
             button.setFixedSize(width, height)
             button.move(x, y)
-            if name == "Generar QR":
-                button.setStyleSheet("""
-                    QPushButton {
-                        background-color: #111A2D;
-                        border: 2px solid #E6AA68;
-                        border-radius: 10px;
-                        color: #E6AA68;
-                        font-weight: bold;
-                    }
-                    QPushButton:hover {
-                        background-color: #E6AA68;
-                        color: #111A2D;
-                    }
-                    QPushButton:pressed {
-                        background-color: #8B6B42;
-                    }
-                """)
-            else:
-                button.setStyleSheet("""
-                    QPushButton {
-                        background-color: rgba(255, 255, 255, 0);
-                        border: 0px solid white;
-                        border-radius: 10px;
-                        color: transparent;
-                    }
-                    QPushButton:hover {
-                        background-color: rgba(255, 255, 255, 0);
-                    }
-                    QPushButton:pressed {
-                        background-color: rgba(230, 170, 104, 80);
-                    }
-                """)
+            button.setStyleSheet("""
+                QPushButton {
+                    background-color: rgba(255, 255, 255, 70);
+                    border: 0px solid white;
+                    border-radius: 10px;
+                    color: transparent;
+                }
+            """)
             button.clicked.connect(self.button_clicked)
             self.buttons.append(button)
 
     def cargar_usuarios(self):
         try:
-            from conexion import mostrar_usuarios
-            usuarios = mostrar_usuarios()
+            usuarios = conexion.mostrar_usuarios()
             self.usuario_combo.addItem("Seleccionar usuario")
             for usuario in usuarios:
-                self.usuario_combo.addItem(f"{usuario[0]} - {usuario[2]}")  # ID - Nombre
+                self.usuario_combo.addItem(f"{usuario[0]} - {usuario[2]}")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al cargar usuarios: {str(e)}")
 
     def button_clicked(self):
         button = self.sender()
         if button.text() == "Regresar":
-            self.cambioP = MainPersonal()
-            self.fade_out()
+            self.close()  # Simplemente cerrar la ventana
         elif button.text() == "Generar QR":
             if self.usuario_combo.currentText() != "Seleccionar usuario":
                 try:
                     id_usuario = self.usuario_combo.currentText().split(" - ")[0]
-                    from conexion import obtener_datos_usuario
-                    datos_usuario = obtener_datos_usuario(id_usuario)
+                    datos_usuario = conexion.obtener_datos_usuario(id_usuario)
                     
                     if datos_usuario:
-                        # datos_usuario[0] = ID_usuario
-                        # datos_usuario[1] = contrasenna
                         qr_path = conexion.generar_qr_usuario(datos_usuario[0], datos_usuario[1])
                         if qr_path:
-                            QMessageBox.information(
-                                self,
-                                "Éxito",
-                                f"Código QR generado en: {qr_path}"
-                            )
+                            QMessageBox.information(self, "Éxito", 
+                                f"Código QR generado en: {qr_path}")
                         else:
-                            QMessageBox.warning(self, "Error", "No se pudo generar el código QR")
+                            QMessageBox.warning(self, "Error", 
+                                "No se pudo generar el código QR")
                     else:
-                        QMessageBox.warning(self, "Error", "No se encontraron datos del usuario")
+                        QMessageBox.warning(self, "Error", 
+                            "No se encontraron datos del usuario")
                 except Exception as e:
-                    print(f"Error al generar QR: {e}")  # Para debug
-                    QMessageBox.critical(self, "Error", f"Error al generar QR: {str(e)}")
+                    QMessageBox.critical(self, "Error", 
+                        f"Error al generar QR: {str(e)}")
             else:
-                QMessageBox.warning(self, "Advertencia", "Por favor seleccione un usuario")
+                QMessageBox.warning(self, "Advertencia", 
+                    "Por favor seleccione un usuario")
 
     def fade_out(self):
         self.animation = QPropertyAnimation(self, b"windowOpacity")
-        self.animation.setDuration(150) 
-        self.animation.setStartValue(1.0)  
-        self.animation.setEndValue(0.0)  
-        self.animation.finished.connect(self.open_new_window) 
+        self.animation.setDuration(150)
+        self.animation.setStartValue(1.0)
+        self.animation.setEndValue(0.0)
+        self.animation.finished.connect(self.open_new_window)
         self.animation.start()
 
     def open_new_window(self):
-        self.cambioP.setWindowOpacity(0.0)  
+        self.cambioP.setWindowOpacity(0.0)
         self.cambioP.show()
         self.new_animation = QPropertyAnimation(self.cambioP, b"windowOpacity")
-        self.new_animation.setDuration(150)  
-        self.new_animation.setStartValue(0.0)  
-        self.new_animation.setEndValue(1.0)  
+        self.new_animation.setDuration(150)
+        self.new_animation.setStartValue(0.0)
+        self.new_animation.setEndValue(1.0)
         self.new_animation.start()
         self.close()
-
-#################################### Main Application #######################################################
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
