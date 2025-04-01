@@ -4,7 +4,11 @@ import main_p
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLineEdit
 from PyQt6.QtGui import QPixmap
+<<<<<<< HEAD
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QComboBox, QMessageBox, QTableWidget, QHeaderView,QTableWidgetItem 
+=======
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QComboBox, QMessageBox
+>>>>>>> 9930bf7949efee126e8da371c94c253d3b5d7b16
 #####################################################
 class MainCombo(QMainWindow):
     def __init__(self):
@@ -138,7 +142,7 @@ class AgregarCombo(QMainWindow):
         self.setCentralWidget(central_widget)
 
         background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/agregar combo.png')
+        pixmap = QPixmap('imagenes/ADDC.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)

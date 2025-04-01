@@ -28,17 +28,10 @@ class MainPWindow(QMainWindow):
         # aca van los botones w
         # para ajustar es cord x, cord y, y ancho y alto
         button_configs = [
-            ["Caja", 30, 152, 200, 50],
-            ["Reportes", 30, 227, 200, 50],
-            ["Productos", 30, 303, 200, 50],
-            ["Personal", 30, 378, 200, 50],
-            ["Inventario", 30, 454, 200, 50],
-            ["Ajustes", 30, 530, 200, 50],
-            ["Salir", 30, 605, 200, 50],
-            ["Sproducto", 276, 157, 344, 55],
-            ["Scombo", 276, 240, 344, 55],
-            ["Sdesc", 276, 321, 344, 55],
-            ["Regresar", 1270, 655, 77, 70],
+            ["Sproducto", 333, 187, 222, 394],
+            ["Scombo", 573, 187, 222, 394],
+            ["Sdesc", 812, 187, 222, 394],
+            ["Regresar", 1268, 10, 70, 90],
             
         ]
 
@@ -55,7 +48,7 @@ class MainPWindow(QMainWindow):
                     color: transparent;
             }
             QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0);
+                background-color: rgba(255, 255, 255, 30);
             }
             QPushButton:pressed {
                 background-color: rgba(230, 170, 104, 80);
