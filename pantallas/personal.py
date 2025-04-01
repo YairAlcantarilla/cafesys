@@ -1,6 +1,6 @@
 import sys
 import conexion
-import p_inicio
+import p_inicio, Caja, P_Registros, main_p, personal, login, p_inventario
 from PyQt6.QtCore import Qt, QPropertyAnimation
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout, 
@@ -65,10 +65,18 @@ class MainPersonal(QMainWindow):
         self.cargar_datos()
 
         button_configs = [
+            ["Caja", 30, 152, 60, 50],
+            ["Reportes", 30, 227, 60, 50],
+            ["Productos", 30, 303, 60, 50],
+            ["Personal", 30, 378, 60, 50],
+            ["Inventario", 30, 454, 60, 50],
+            ["Ajustes", 30, 530, 60, 50],
+            ["Salir", 30, 605, 60, 50],
+            #################################
             ["AgregarE", 875, 144, 344, 55],
             ["EliminarE", 875, 225, 344, 55],
             ["EditarE", 875, 306, 344, 55],
-            ["GenerarQR", 875, 387, 344, 55],  # New QR button
+            ["GenerarQR", 875, 387, 344, 55],  
             ["RegresarE", 1270, 655, 77, 70],
         ]
 
@@ -134,6 +142,84 @@ class MainPersonal(QMainWindow):
         elif button.text() == "RegresarE":
             self.cambioP = p_inicio.MainWindow()
             self.fade_out()
+        elif button.text() == "Caja":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de producto?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = Caja.CajaI()
+                self.main_window.show()
+                self.close()
+
+        elif button.text() == "Reportes":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de producto?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = P_Registros.MainR()
+                self.main_window.show()
+                self.close()
+
+
+        elif button.text() == "Productos":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de producto?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = main_p.MainPWindow()
+                self.main_window.show()
+                self.close()
+        
+        elif button.text() == "Personal":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de producto?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = personal.MainPersonal()
+                self.main_window.show()
+                self.close()
+        elif button.text() == "Inventario":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de producto?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = p_inventario.MainWindow()
+                self.main_window.show()
+                self.close()
+
+        elif button.text() == "Salir":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de salir a la pantalla principal?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = login.LoginWindow()
+                self.main_window.show()
+                self.close()
+
         
     def fade_out(self):
         self.animation = QPropertyAnimation(self, b"windowOpacity")

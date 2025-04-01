@@ -1,10 +1,11 @@
 import sys
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QLabel, QVBoxLayout, 
     QWidget, QPushButton, QTableWidget, QTableWidgetItem, 
-    QHeaderView, QDialog
+    QHeaderView, QDialog, QMessageBox
 )
 from conexion import conectar_db
 
@@ -24,6 +25,7 @@ class MainR(QMainWindow):
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
+
 
         # Tabla de registros
         self.table_widget = QTableWidget(self)

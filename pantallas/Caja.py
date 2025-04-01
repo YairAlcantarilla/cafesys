@@ -60,7 +60,7 @@ class CajaI(QMainWindow):
             ["PEfectivo", 914, 505, 77, 75],
             ["PTarjeta", 1015, 505, 77, 75],
             ["Ayuda", 1210, 25, 50, 50],
-            ["Confirmar", 914, 605, 178, 75],  # New Confirmar button
+            ["Confirmar", 842, 638, 94, 94],  
         ]
         self.buttons = []
         for name, x, y, width, height in button_configs:
@@ -69,9 +69,9 @@ class CajaI(QMainWindow):
             button.move(x, y)
             button.setStyleSheet("""
                 QPushButton {
-                    background-color: rgba(255, 255, 255, 50);
+                    background-color: rgba(255, 255, 255, 0);
                     border: 0px solid white;
-                    border-radius: 10px;
+                    border-radius: 16px;
                     color: transparent;
             }
             QPushButton:hover {
@@ -315,19 +315,19 @@ class CajaImagenes(QGraphicsView):
         self.scene.addItem(self.image_item)
 
         # Lista de imágenes para rotar
-        self.imagenes = ["imagenes/Promo2.png", "imagenes/Promo2.png", "imagenes/Promo2.png"]
+        self.imagenes = ["imagenes/Promo3.png", "imagenes/Promo5.png"]
         self.indice_actual = 0
 
         self.cambiar_imagen()
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.cambiar_imagen)
-        self.timer.start(3000)  # Cambiar imagen cada 3 segundos
+        self.timer.start(3000)
 
     def cambiar_imagen(self):
         """Cambia la imagen en la caja cada cierto tiempo."""
         if self.imagenes:
             pixmap = QPixmap(self.imagenes[self.indice_actual])
-            pixmap = pixmap.scaled(220, 680, Qt.AspectRatioMode.KeepAspectRatioByExpanding)
+            pixmap = pixmap.scaled(216, 680, Qt.AspectRatioMode.KeepAspectRatioByExpanding)
             self.image_item.setPixmap(pixmap)
 
             # Avanzar al siguiente índice
