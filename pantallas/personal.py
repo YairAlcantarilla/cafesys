@@ -348,7 +348,7 @@ class EliminarE(QMainWindow):
 
         # Agregar ComboBox para seleccionar usuario
         self.usuario_combo = QComboBox(self)
-        self.usuario_combo.setGeometry(74, 200, 252, 40)  # Ajusta estas coordenadas según necesites
+        self.usuario_combo.setGeometry(74, 200, 252, 40)
         self.usuario_combo.setStyleSheet("""
             QComboBox {
                 border: 1px solid #E6AA68;
@@ -412,10 +412,10 @@ class EliminarE(QMainWindow):
             if self.usuario_combo.currentText() != "Seleccionar usuario":
                 try:
                     id_usuario = self.usuario_combo.currentText().split(" - ")[0]
-                    # Get all users first to check administrators
+
                     usuarios = conexion.mostrar_usuarios()
                     
-                    # Find the current user's data from the list
+
                     usuario_actual = None
                     for usuario in usuarios:
                         if str(usuario[0]) == id_usuario:
@@ -426,9 +426,9 @@ class EliminarE(QMainWindow):
                         QMessageBox.warning(self, "Error", "Usuario no encontrado")
                         return
                     
-                    # Check if trying to delete an admin
-                    if usuario_actual[5] == 1:  # ID_Puesto = 1 for admin
-                        # Count total admins
+
+                    if usuario_actual[5] == 1:  # ID_Puesto = 1 es de administrador
+                        # Checkeo de admins
                         count_admin = sum(1 for user in usuarios if user[5] == 1)
                         
                         if count_admin <= 1:
@@ -449,8 +449,7 @@ class EliminarE(QMainWindow):
                     if reply == QMessageBox.StandardButton.Yes:
                         conexion.eliminar_usuario(id_usuario)
                         QMessageBox.information(self, "Éxito", "Usuario eliminado correctamente")
-                        self.cargar_usuarios()  # Reload users list
-                        # Update main window if it exists
+                        self.cargar_usuarios()
                         for widget in QApplication.topLevelWidgets():
                             if isinstance(widget, MainPersonal):
                                 widget.cargar_datos()
@@ -626,7 +625,6 @@ class EditarE(QMainWindow):
                 id_usuario = self.usuario_combo.currentText().split(" - ")[0]
                 usuarios = conexion.mostrar_usuarios()
                 
-                # Find the selected user in the list
                 usuario_actual = None
                 for usuario in usuarios:
                     if str(usuario[0]) == id_usuario:
@@ -808,8 +806,8 @@ class GenerarQR(QMainWindow):
         self.cargar_usuarios()
 
         button_configs = [
-            ["Generar QR", 122, 547, 100, 60],  # Swapped position with Regresar
-            ["Regresar", 279, 547, 100, 60],    # Swapped position with Generar QR
+            ["Generar QR", 122, 547, 100, 60],
+            ["Regresar", 279, 547, 100, 60],
         ]
 
         self.buttons = []

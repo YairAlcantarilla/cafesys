@@ -475,15 +475,13 @@ class EliminarProducto(QMainWindow):
                 try:
                     from conexion import eliminar_producto
                     eliminar_producto(producto_seleccionado)
-                    
-                    # Update the main window's table
+
                     for widget in QApplication.topLevelWidgets():
                         if isinstance(widget, MainWindow):
                             widget.cargar_datos()
                             break
                     
                     QMessageBox.information(self, "Éxito", "Producto eliminado correctamente")
-                    # Reset combo and reload products
                     self.producto_combo.clear()
                     self.cargar_productos()
                 except Exception as e:
