@@ -23,7 +23,7 @@ class MainCombo(QMainWindow):
 
         # Fondo
         background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/menu_combos.png')
+        pixmap = QPixmap('imagenes/PCOMB.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
@@ -137,13 +137,13 @@ class AgregarCombo(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Agregar combo")
-        self.setFixedSize(1366, 768)
+        self.setFixedSize(400, 500)
 
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
 
         background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/ADDC.png')
+        pixmap = QPixmap('imagenes/ACOMB.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
@@ -153,32 +153,32 @@ class AgregarCombo(QMainWindow):
         self.nombre_combo = QLineEdit(self)
         self.nombre_combo.setPlaceholderText("Nombre del combo")
         self.nombre_combo.setFixedSize(321, 38)
-        self.nombre_combo.move(593, 196)
+        self.nombre_combo.move(30, 120)
         self.nombre_combo.setStyleSheet(self.estilo_line_edit())
         
         self.precio_combo = QLineEdit(self)
         self.precio_combo.setPlaceholderText("Precio del combo")
         self.precio_combo.setFixedSize(321, 38)
-        self.precio_combo.move(593, 451)
+        self.precio_combo.move(30, 180)
         self.precio_combo.setStyleSheet(self.estilo_line_edit())
 
         # ComboBox para productos
         self.producto1_combo = QComboBox(self)
         self.producto1_combo.setFixedSize(321, 38)
-        self.producto1_combo.move(593, 276)
+        self.producto1_combo.move(30, 230)
         self.producto1_combo.setStyleSheet(self.estilo_combo_box())
 
         self.producto2_combo = QComboBox(self)
         self.producto2_combo.setFixedSize(321, 38)
-        self.producto2_combo.move(593, 360)
+        self.producto2_combo.move(30, 280)
         self.producto2_combo.setStyleSheet(self.estilo_combo_box())
 
         self.cargar_productos()
 
         # Botones
         button_configs = [
-            ["Regresar", 1270, 655, 77, 70],
-            ["Confirmar", 798, 554, 227, 78],
+            ["Cancelar", 73, 403, 100, 60],
+            ["Guardar", 227, 403, 100, 60],
         ]
         self.buttons = []
         for name, x, y, width, height in button_configs:
