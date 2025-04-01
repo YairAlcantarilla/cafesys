@@ -1,5 +1,5 @@
 import sys
-import Caja, P_Registros, personal, login
+import Caja, P_Registros, personal, login, p_inventario
 import p_inicio
 import conexion
 import main_p
@@ -198,6 +198,18 @@ class MainWindow(QMainWindow):
 
             if respuesta == QMessageBox.StandardButton.Yes:
                 self.main_window = personal.MainPersonal()
+                self.main_window.show()
+                self.close()
+        elif button.text() == "Inventario":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de producto?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = p_inventario.MainWindow()
                 self.main_window.show()
                 self.close()
         
