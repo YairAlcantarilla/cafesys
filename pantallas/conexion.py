@@ -9,7 +9,7 @@ def conectar_db():
         conexion =mysql.connector.connect(
             host= "localhost",
             user = "root",
-            passwd="895488",
+            passwd="12345678",
             database="tienda"
         )
         return conexion
@@ -113,12 +113,30 @@ def insertar_usuario(datos):
         finally:
             conexion.close()
 
-def get_next_id(table_name, id_column):
+"""def get_next_id(table_name, id_column):
     try:
         cursor = conectar_db().cursor()
         cursor.execute(f"SELECT MAX({id_column}) FROM {table_name}")
         max_id = cursor.fetchone()[0]
         return 1 if max_id is None else max_id + 1
+    except Exception as e:
+        raise Exception(f"Error getting next ID: {str(e)}")
+"""
+def get_next_id(table_name, id_column):
+    try:
+        conn = conectar_db()  # Abre la conexión correctamente
+        if conn is None:
+            raise Exception("Error: No se pudo establecer la conexión a la base de datos")
+        
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT MAX({id_column}) FROM {table_name}")
+        max_id = cursor.fetchone()[0]
+        
+        cursor.close()  # Cierra el cursor
+        conn.close()    # Cierra la conexión
+        
+        return 1 if max_id is None else max_id + 1
+
     except Exception as e:
         raise Exception(f"Error getting next ID: {str(e)}")
 
@@ -267,6 +285,99 @@ def obtener_datos_usuario(ID_usuario):
         print(f"Error al obtener datos del usuario: {e}")
         return None
 
+<<<<<<< HEAD
+
+def agregar_combo(nombre, producto1, producto2, precio):
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+
+        # Obtener los IDs de los productos seleccionados
+        cursor.execute("SELECT ID_producto FROM producto WHERE Nombre = %s", (producto1,))
+        id_producto1 = cursor.fetchone()
+
+        cursor.execute("SELECT ID_producto FROM producto WHERE Nombre = %s", (producto2,))
+        id_producto2 = cursor.fetchone()
+
+        if not id_producto1 or not id_producto2:
+            raise Exception("Uno o ambos productos no existen en la base de datos.")
+
+        # Insertar el combo en la tabla 'combos'
+        cursor.execute("""
+            INSERT INTO combos (Nombre, Producto1_ID, Producto2_ID, Precio)
+            VALUES (%s, %s, %s, %s)
+        """, (nombre, id_producto1[0], id_producto2[0], precio))
+
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+    except Exception as e:
+        raise Exception(f"Error al agregar el combo: {str(e)}")
+
+
+def mostrar_combos():
+    try:
+        
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+
+        consulta = """
+        SELECT c.Nombre, p1.Nombre AS Producto1, p2.Nombre AS Producto2, c.Precio
+        FROM combos c
+        JOIN producto p1 ON c.Producto1_ID = p1.ID_producto
+        JOIN producto p2 ON c.Producto2_ID = p2.ID_producto
+        """
+        cursor.execute(consulta)
+        combos = cursor.fetchall()
+
+        conexion.close()
+        return combos
+
+    except mysql.connector.Error as e:
+        print(f"Error al obtener los combos: {e}")
+        return []
+
+
+from mysql.connector import Error  # Asegúrate de importar Error correctamente
+
+
+def eliminar_combo(nombre_combo):
+    try:
+        conexion = conectar_db()
+        cursor= conexion.cursor()
+        if conexion.is_connected():
+            cursor = conexion.cursor()
+
+            # Verifica si el combo existe antes de intentar eliminarlo
+            check_query = "SELECT COUNT(*) FROM combos WHERE nombre_combo = %s"
+            cursor.execute(check_query, (nombre_combo,))
+            result = cursor.fetchone()
+            if result[0] == 0:
+                print(f"Combo '{nombre_combo}' no encontrado.")
+                return
+
+            # SQL para eliminar el combo
+            query = "DELETE FROM combos WHERE nombre_combo = %s"
+            cursor.execute(query, (nombre_combo,))
+            
+            # Confirmamos que la operación fue exitosa
+            conexion.commit()
+
+            # Verificamos cuántas filas fueron afectadas
+            if cursor.rowcount > 0:
+                print(f"Combo '{nombre_combo}' eliminado correctamente.")
+            else:
+                print(f"Combo '{nombre_combo}' no encontrado.")
+
+    except Error as e:
+        print(f"Error al eliminar combo: {e}")
+        raise Exception(f"Error al eliminar combo: {e}")
+    finally:
+        # Cerramos la conexión
+        if conexion.is_connected():
+            cursor.close()
+            conexion.close()
+=======
 def obtener_precio_producto(nombre_producto):
     try:
         connection = conectar_db()
@@ -358,3 +469,4 @@ def obtener_usuario_activo():
     finally:
         if connection:
             connection.close()
+>>>>>>> 9930bf7949efee126e8da371c94c253d3b5d7b16
