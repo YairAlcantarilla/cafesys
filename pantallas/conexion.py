@@ -9,7 +9,7 @@ def conectar_db():
         conexion =mysql.connector.connect(
             host= "localhost",
             user = "root",
-            passwd="12345678",
+            passwd="895488",
             database="tienda"
         )
         return conexion
@@ -285,7 +285,6 @@ def obtener_datos_usuario(ID_usuario):
         print(f"Error al obtener datos del usuario: {e}")
         return None
 
-<<<<<<< HEAD
 
 def agregar_combo(nombre, producto1, producto2, precio):
     try:
@@ -377,7 +376,6 @@ def eliminar_combo(nombre_combo):
         if conexion.is_connected():
             cursor.close()
             conexion.close()
-=======
 def obtener_precio_producto(nombre_producto):
     try:
         connection = conectar_db()
@@ -469,4 +467,3 @@ def obtener_usuario_activo():
     finally:
         if connection:
             connection.close()
->>>>>>> 9930bf7949efee126e8da371c94c253d3b5d7b16

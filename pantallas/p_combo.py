@@ -2,13 +2,14 @@ import sys
 import p_inicio
 import main_p
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLineEdit
+from PyQt6.QtWidgets import (
+    QApplication, QMainWindow, QLabel, QVBoxLayout, 
+    QWidget, QPushButton, QComboBox, QMessageBox, 
+    QTableWidget, QHeaderView, QTableWidgetItem, QLineEdit
+)
 from PyQt6.QtGui import QPixmap
-<<<<<<< HEAD
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QComboBox, QMessageBox, QTableWidget, QHeaderView,QTableWidgetItem 
-=======
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QComboBox, QMessageBox
->>>>>>> 9930bf7949efee126e8da371c94c253d3b5d7b16
+from conexion import eliminar_combo, mostrar_combos
+
 #####################################################
 class MainCombo(QMainWindow):
     def __init__(self):
@@ -280,7 +281,6 @@ class AgregarCombo(QMainWindow):
 
 
 ###########################################################################################
-from conexion import eliminar_combo, mostrar_combos
 
 class EliminarCombo(QMainWindow):
     def __init__(self):
