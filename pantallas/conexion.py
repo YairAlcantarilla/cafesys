@@ -266,3 +266,95 @@ def obtener_datos_usuario(ID_usuario):
     except Exception as e:
         print(f"Error al obtener datos del usuario: {e}")
         return None
+
+def obtener_precio_producto(nombre_producto):
+    try:
+        connection = conectar_db()
+        cursor = connection.cursor()
+        
+        # Cambiar 'productos' a 'Producto'
+        cursor.execute("SELECT Precio FROM Producto WHERE Nombre = %s", (nombre_producto,))
+        resultado = cursor.fetchone()
+        
+        if resultado:
+            return resultado[0]
+        return 0.0
+        
+    except Exception as e:
+        print(f"Error al obtener precio: {e}")
+        return 0.0
+    finally:
+        if connection:
+            connection.close()
+
+def insertar_venta(datos_venta):
+    connection = None
+    try:
+        connection = conectar_db()
+        cursor = connection.cursor()
+        
+        # Define SQL statement with exact column names
+        sql = """
+            INSERT INTO ventas (
+                producto,
+                fecha,
+                cantidad,
+                precio_total,
+                forma_pago,
+                id_usuario
+            ) VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        
+        # Create tuple of values in the same order
+        params = (
+            datos_venta['producto'],
+            datos_venta['fecha'],
+            datos_venta['cantidad'],
+            float(datos_venta['precio_total']),  # Convert Decimal to float
+            datos_venta['forma_pago'],
+            datos_venta['id_usuario']
+        )
+        
+        # Debug information
+        print("\nSQL Query:")
+        print(sql)
+        print("\nParámetros SQL:")
+        print(f"Cantidad de parámetros: {len(params)}")
+        for i, param in enumerate(params):
+            print(f"Param {i+1}: {param} ({type(param)})")
+            
+        # Execute with parameterized query
+        cursor.execute(sql, params)
+        connection.commit()
+        return True
+        
+    except Exception as e:
+        print(f"\nError detallado en insertar_venta:")
+        print(f"Tipo de error: {type(e)}")
+        print(f"Mensaje de error: {str(e)}")
+        raise e
+    finally:
+        if connection:
+            connection.close()
+
+def obtener_usuario_activo():
+    """Obtiene un ID de usuario válido de la base de datos"""
+    connection = None
+    try:
+        connection = conectar_db()
+        cursor = connection.cursor()
+        
+        # Get first available user ID
+        cursor.execute("SELECT ID_usuario FROM usuario LIMIT 1")
+        result = cursor.fetchone()
+        
+        if result:
+            return result[0]
+        return None
+        
+    except Exception as e:
+        print(f"Error al obtener usuario: {e}")
+        return None
+    finally:
+        if connection:
+            connection.close()

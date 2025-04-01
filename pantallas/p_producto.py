@@ -1,4 +1,5 @@
 import sys
+import Caja, P_Registros, personal, login
 import p_inicio
 import conexion
 import main_p
@@ -64,13 +65,14 @@ class MainWindow(QMainWindow):
         self.cargar_datos()
 
         button_configs = [
-            ["Caja", 30, 152, 200, 50],
-            ["Reportes", 30, 227, 200, 50],
-            ["Productos", 30, 303, 200, 50],
-            ["Personal", 30, 378, 200, 50],
-            ["Inventario", 30, 454, 200, 50],
-            ["Ajustes", 30, 530, 200, 50],
-            ["Salir", 30, 605, 200, 50],
+            #Botones laterales
+            ["Caja", 30, 152, 60, 50],
+            ["Reportes", 30, 227, 60, 50],
+            ["Productos", 30, 303, 60, 50],
+            ["Personal", 30, 378, 60, 50],
+            ["Inventario", 30, 454, 60, 50],
+            ["Ajustes", 30, 530, 60, 50],
+            ["Salir", 30, 605, 60, 50],
             #otrosbotones
             ["Agregar Producto", 875, 144, 343, 55],
             ["Eliminar", 875, 225, 343, 55],
@@ -146,13 +148,92 @@ class MainWindow(QMainWindow):
             self.main_window = main_p.MainPWindow()  
             self.main_window.show()
             self.close()
+        elif button.text() == "Caja":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de producto?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = Caja.CajaI()
+                self.main_window.show()
+                self.close()
+
+        elif button.text() == "Reportes":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de producto?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = P_Registros.MainR()
+                self.main_window.show()
+                self.close()
+
+
+        elif button.text() == "Productos":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de producto?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = main_p.MainPWindow()
+                self.main_window.show()
+                self.close()
+        
+        elif button.text() == "Personal":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de producto?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = personal.MainPersonal()
+                self.main_window.show()
+                self.close()
+        
+        elif button.text() == "Salir":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de salir a la pantalla principal?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = login.LoginWindow()
+                self.main_window.show()
+                self.close()
+
+
 ########################################################################################################
 class AgregarProducto(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+
+        
+        # Fondo
+        background_label = QLabel(central_widget)
+        pixmap = QPixmap('imagenes/PAP.png')
+        background_label.setPixmap(pixmap)
+        background_label.setScaledContents(True)
+        central_layout = QVBoxLayout(central_widget)
+        central_layout.addWidget(background_label)
+    
         self.setWindowTitle("Agregar Producto")
-        self.setFixedSize(400, 300)
+        self.setFixedSize(400, 500)
         self.setStyleSheet("background-color: #111A2D;")
 
         # Crear labels
@@ -162,7 +243,7 @@ class AgregarProducto(QMainWindow):
         for i, text in enumerate(labels):
             label = QLabel(text, self)
             label.setStyleSheet("color: #E6AA68; font-size: 14px;")
-            label.move(30, 30 + i * 60)
+            label.move(30, 152 + i * 60)
             self.label_widgets.append(label)
 
         # Crear inputs
@@ -170,7 +251,7 @@ class AgregarProducto(QMainWindow):
         for i in range(3):  # Solo 3 inputs (nombre, precio, stock)
             input_field = QLineEdit(self)
             input_field.setFixedSize(200, 30)
-            input_field.move(160, 25 + i * 60)
+            input_field.move(160, 150 + i * 60)
             input_field.setStyleSheet("""
                 QLineEdit {
                     border: 1px solid #E6AA68;
@@ -186,7 +267,7 @@ class AgregarProducto(QMainWindow):
         # Crear ComboBox para categorías
         self.categoria_combo = QComboBox(self)
         self.categoria_combo.setFixedSize(200, 30)
-        self.categoria_combo.move(160, 205)
+        self.categoria_combo.move(160, 325)
         self.categoria_combo.setStyleSheet("""
             QComboBox {
                 border: 1px solid #E6AA68;
@@ -215,8 +296,8 @@ class AgregarProducto(QMainWindow):
 
         # Botones
         button_configs = [
-            ["Cancelar", 30, 250, 100, 30],
-            ["Guardar", 270, 250, 100, 30],
+            ["Cancelar", 30, 400, 100, 30],
+            ["Guardar", 270, 400, 100, 30],
         ]
         
         self.buttons = []
@@ -298,19 +379,29 @@ class EliminarProducto(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+
+        background_label = QLabel(central_widget)
+        pixmap = QPixmap('imagenes/ELIMP.png')
+        background_label.setPixmap(pixmap)
+        background_label.setScaledContents(True)
+        central_layout = QVBoxLayout(central_widget)
+        central_layout.addWidget(background_label)
+
         self.setWindowTitle("Eliminar Producto")
         self.setFixedSize(400, 300)
-        self.setStyleSheet("background-color: #111A2D;")
+        self.setStyleSheet("background-color: #000928;")
 
         # Crear labels
-        label = QLabel("Seleccione producto:", self)
-        label.setStyleSheet("color: #E6AA68; font-size: 14px;")
-        label.move(30, 30)
+        label = QLabel("Producto:", self)
+        label.setStyleSheet("color: #E6AA68; font-size: 16px;")
+        label.move(30, 152)
 
-        # Crear ComboBox para productos
+        # Crear ComboBox para productos 
         self.producto_combo = QComboBox(self)
         self.producto_combo.setFixedSize(200, 30)
-        self.producto_combo.move(160, 25)
+        self.producto_combo.move(160, 150)
         self.producto_combo.setStyleSheet("""
             QComboBox {
                 border: 1px solid #E6AA68;
@@ -405,24 +496,34 @@ class EditarProducto(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+
+        background_label = QLabel(central_widget)
+        pixmap = QPixmap('imagenes/EDITP.png')
+        background_label.setPixmap(pixmap)
+        background_label.setScaledContents(True)
+        central_layout = QVBoxLayout(central_widget)
+        central_layout.addWidget(background_label)
+
         self.setWindowTitle("Editar Producto")
-        self.setFixedSize(400, 400)
+        self.setFixedSize(400, 520)
         self.setStyleSheet("background-color: #111A2D;")
 
         # Crear labels
-        labels = ["Seleccione producto:", "Nombre:", "Precio:", "Stock:", "Categoría:"]
+        labels = ["Producto:", "Nombre:", "Precio:", "Stock:", "Categoría:"]
         self.label_widgets = []
         
         for i, text in enumerate(labels):
             label = QLabel(text, self)
             label.setStyleSheet("color: #E6AA68; font-size: 14px;")
-            label.move(30, 30 + i * 60)
+            label.move(30, 125 + i * 60)
             self.label_widgets.append(label)
 
         # Crear ComboBox para seleccionar producto
         self.producto_combo = QComboBox(self)
         self.producto_combo.setFixedSize(200, 30)
-        self.producto_combo.move(160, 25)
+        self.producto_combo.move(160, 120)
         self.producto_combo.setStyleSheet("""
             QComboBox {
                 border: 1px solid #E6AA68;
@@ -448,7 +549,7 @@ class EditarProducto(QMainWindow):
         for i in range(3):
             input_field = QLineEdit(self)
             input_field.setFixedSize(200, 30)
-            input_field.move(160, 85 + i * 60)
+            input_field.move(160, 190 + i * 60)
             input_field.setStyleSheet("""
                 QLineEdit {
                     border: 1px solid #E6AA68;
@@ -464,7 +565,7 @@ class EditarProducto(QMainWindow):
         # Crear ComboBox para categorías
         self.categoria_combo = QComboBox(self)
         self.categoria_combo.setFixedSize(200, 30)
-        self.categoria_combo.move(160, 265)
+        self.categoria_combo.move(160, 365)
         self.categoria_combo.setStyleSheet(self.producto_combo.styleSheet())
 
         # Cargar datos
@@ -473,8 +574,8 @@ class EditarProducto(QMainWindow):
 
         # Botones
         button_configs = [
-            ["Cancelar", 30, 350, 100, 30],
-            ["Guardar", 270, 350, 100, 30],
+            ["Cancelar", 30, 450, 100, 30],
+            ["Guardar", 270, 450, 100, 30],
         ]
         
         self.buttons = []
