@@ -31,7 +31,7 @@ class MainPWindow(QMainWindow):
             ["Sproducto", 333, 187, 222, 394],
             ["Scombo", 573, 187, 222, 394],
             ["Sdesc", 812, 187, 222, 394],
-            ["Regresar", 1268, 10, 70, 90],
+            ["Regresar", 1264, 34, 75, 70],
             
         ]
 

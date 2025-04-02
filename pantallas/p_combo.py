@@ -177,8 +177,8 @@ class AgregarCombo(QMainWindow):
 
         # Botones
         button_configs = [
-            ["Cancelar", 73, 403, 100, 60],
-            ["Guardar", 227, 403, 100, 60],
+            ["Confirmar", 73, 403, 100, 60],
+            ["Regresar", 227, 403, 100, 60],
         ]
         self.buttons = []
         for name, x, y, width, height in button_configs:

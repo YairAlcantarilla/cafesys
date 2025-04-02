@@ -1,5 +1,5 @@
 import sys
-
+import Caja, P_Registros, personal, login, p_inventario, main_p, P_Ajustes
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
@@ -25,6 +25,73 @@ class MainR(QMainWindow):
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
+        ###########################################
+        button_configs = [
+            #Botones laterales
+            ["Caja", 30, 152, 60, 50],
+            ["Reportes", 30, 227, 60, 50],
+            ["Productos", 30, 303, 60, 50],
+            ["Personal", 30, 378, 60, 50],
+            ["Inventario", 30, 454, 60, 50],
+            ["Ajustes", 30, 530, 60, 50],
+            ["Salir", 30, 605, 60, 50],
+            #otrosbotones
+            ["Agregar Producto", 875, 144, 343, 55],
+            ["Eliminar", 875, 225, 343, 55],
+            ["Editar", 875, 306, 343, 55],
+            ["Regresar", 1270, 655, 77, 70],
+           
+        ]
+
+        
+        self.buttons = []
+        for name, x, y, width, height in button_configs:
+            button = QPushButton(name, self)
+            button.setFixedSize(width, height)
+            button.move(x, y)
+            button.setStyleSheet("""
+                QPushButton {
+                    background-color: rgba(255, 255, 255, 0);
+                    border: 0px solid white;
+                    border-radius: 10px;
+                    color:  rgba(255, 255, 255, 0);
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0);
+            }
+            QPushButton:pressed {
+                background-color: rgba(230, 170, 104, 80);
+            }
+        """)
+            self.buttons.append(button)
+        
+        for button in self.buttons:
+            button.clicked.connect(self.button_clicked)
+        ######################################################
+
+    
+        for name, x, y, width, height in button_configs:
+            button = QPushButton(name, self)
+            button.setFixedSize(width, height)
+            button.move(x, y)
+            button.setStyleSheet("""
+                QPushButton {
+                    background-color: rgba(255, 255, 255, 0);
+                    border: 0px solid white;
+                    border-radius: 10px;
+                    color:  rgba(255, 255, 255, 0);
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0);
+            }
+            QPushButton:pressed {
+                background-color: rgba(230, 170, 104, 80);
+            }
+        """)
+            self.buttons.append(button)
+        
+        for button in self.buttons:
+            button.clicked.connect(self.button_clicked)
 
 
         # Tabla de registros
@@ -70,7 +137,7 @@ class MainR(QMainWindow):
         self.cargar_datos()
 
         # Botón de regresar
-        self.regresar_button = QPushButton("Regresar", self)
+        self.regresar_button = QPushButton("Regresar", self) 
         self.regresar_button.setGeometry(1270, 655, 77, 70)
         self.regresar_button.setStyleSheet("""
             QPushButton {
@@ -211,6 +278,100 @@ class MainR(QMainWindow):
         self.cambioP.show()
         self.close()
 
+    def button_clicked(self):
+        button = self.sender()
+        
+        if button.text() == "Caja":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de Registros?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = Caja.CajaI()
+                self.main_window.show()
+                self.close()
+
+        elif button.text() == "Reportes":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de Registros?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = P_Registros.MainR()
+                self.main_window.show()
+                self.close()
+
+
+        elif button.text() == "Productos":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de Registros?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = main_p.MainPWindow()
+                self.main_window.show()
+                self.close()
+        
+        elif button.text() == "Personal":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de Registros?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = personal.MainPersonal()
+                self.main_window.show()
+                self.close()
+        elif button.text() == "Inventario":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de Registros?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = p_inventario.MainWindow()
+                self.main_window.show()
+                self.close()
+        elif button.text() == "Ajustes":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de Registros?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = P_Ajustes.MainAjustes()
+                self.main_window.show()
+                self.close()
+
+        elif button.text() == "Salir":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de salir a la pantalla principal?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = login.LoginWindow()
+                self.main_window.show()
+                self.close()
+####        
+
 class VentasWindow(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -293,6 +454,12 @@ class VentasWindow(QDialog):
         except Exception as e:
             from PyQt6.QtWidgets import QMessageBox
             QMessageBox.critical(self, "Error", f"Error al cargar ventas: {str(e)}")
+
+
+######################################
+        
+        
+    
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

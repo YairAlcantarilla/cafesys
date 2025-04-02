@@ -49,13 +49,13 @@ class MainAjustes(QMainWindow):
             button.move(x, y)
             button.setStyleSheet("""
                 QPushButton {
-                    background-color: rgba(255, 255, 255, 50);
+                    background-color: rgba(255, 255, 255, 0);
                     border: 0px solid white;
                     border-radius: 10px;
                     color: transparent;
             }
             QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0);
+                background-color: rgba(255, 255, 255, 20);
             }
             QPushButton:pressed {
                 background-color: rgba(230, 170, 104, 80);
