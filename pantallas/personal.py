@@ -864,7 +864,7 @@ class GenerarQR(QMainWindow):
         self.setWindowTitle("Generar QR")
         self.setFixedSize(500, 650)
 
-        central_widget = QWidget(self)
+        central_widget = QWidget(selgf)
         self.setCentralWidget(central_widget)
         
         background_label = QLabel(central_widget)
@@ -875,6 +875,7 @@ class GenerarQR(QMainWindow):
         layout = QVBoxLayout(central_widget)
         layout.addWidget(background_label)
 
+        # Dropdown menu para usuarios
         self.usuario_combo = QComboBox(self)
         self.usuario_combo.setGeometry(195, 152, 270, 40)
         self.usuario_combo.setStyleSheet("""
@@ -890,6 +891,18 @@ class GenerarQR(QMainWindow):
             }
         """)
         self.cargar_usuarios()
+
+        # Label para mostrar el QR
+        self.qr_label = QLabel(self)
+        self.qr_label.setGeometry(195, 210, 270, 270)  # Position below dropdown
+        self.qr_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.qr_label.setStyleSheet("""
+            QLabel {
+                background-color: #111A2D;
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+            }
+        """)
 
         button_configs = [
             ["Generar QR", 122, 547, 100, 60],
@@ -924,7 +937,7 @@ class GenerarQR(QMainWindow):
     def button_clicked(self):
         button = self.sender()
         if button.text() == "Regresar":
-            self.close()  # Simplemente cerrar la ventana
+            self.close()
         elif button.text() == "Generar QR":
             if self.usuario_combo.currentText() != "Seleccionar usuario":
                 try:
@@ -934,8 +947,16 @@ class GenerarQR(QMainWindow):
                     if datos_usuario:
                         qr_path = conexion.generar_qr_usuario(datos_usuario[0], datos_usuario[1])
                         if qr_path:
+                            # Mostrar QR en la ventana
+                            qr_pixmap = QPixmap(qr_path)
+                            scaled_pixmap = qr_pixmap.scaled(
+                                270, 270,
+                                Qt.AspectRatioMode.KeepAspectRatio,
+                                Qt.TransformationMode.SmoothTransformation
+                            )
+                            self.qr_label.setPixmap(scaled_pixmap)
                             QMessageBox.information(self, "Éxito", 
-                                f"Código QR generado en: {qr_path}")
+                                f"Código QR generado correctamente")
                         else:
                             QMessageBox.warning(self, "Error", 
                                 "No se pudo generar el código QR")

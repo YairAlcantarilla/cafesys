@@ -3,7 +3,7 @@ import Caja, P_Registros, personal, login, p_inventario
 import p_inicio
 import conexion
 import main_p
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout, 
                            QWidget, QPushButton, QMessageBox, QLineEdit, 
@@ -77,8 +77,8 @@ class MainWindow(QMainWindow):
             ["Agregar Producto", 875, 144, 343, 55],
             ["Eliminar", 875, 225, 343, 55],
             ["Editar", 875, 306, 343, 55],
+            ["Recargar", 875, 387, 343, 55],  # Nuevo botón de recarga
             ["Regresar", 1270, 655, 77, 70],
-            
         ]
 
         self.buttons = []
@@ -108,7 +108,7 @@ class MainWindow(QMainWindow):
     def cargar_datos(self):
         try:
             from conexion import mostrar_productos
-            productos = mostrar_productos()
+            productos = mostrar_productos(ocultar_especiales=True)
             
             self.table_widget.setRowCount(len(productos))
             
@@ -133,13 +133,19 @@ class MainWindow(QMainWindow):
         button = self.sender()
         if button.text() == "Agregar Producto":
             self.main_window = AgregarProducto()
+            self.main_window.producto_agregado.connect(self.cargar_datos)  # Nueva conexión
             self.main_window.show()
         elif button.text() == "Eliminar":
             self.dialog = EliminarProducto()
+            self.dialog.producto_eliminado.connect(self.cargar_datos)  # Nueva conexión
             self.dialog.show()
         elif button.text() == "Editar":
             self.dialog = EditarProducto()
+            self.dialog.producto_editado.connect(self.cargar_datos)  # Nueva conexión
             self.dialog.show()
+        elif button.text() == "Recargar":  # Nuevo handler
+            self.cargar_datos()
+            QMessageBox.information(self, "Éxito", "Datos actualizados correctamente")
         elif button.text() == "Lista":
             self.main_window = ListaProducto()
             self.main_window.show()
@@ -229,6 +235,8 @@ class MainWindow(QMainWindow):
 
 ########################################################################################################
 class AgregarProducto(QMainWindow):
+    producto_agregado = pyqtSignal()  # Nueva señal
+
     def __init__(self):
         super().__init__()
 
@@ -382,12 +390,15 @@ class AgregarProducto(QMainWindow):
             }
             conexion.insertar_dato("Producto", datos)
             QMessageBox.information(self, "Éxito", "Producto agregado correctamente")
+            self.producto_agregado.emit()  # Emitir señal
             self.close()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo agregar el producto:\n{str(e)}")
 
 ######################################################################################################
 class EliminarProducto(QMainWindow):
+    producto_eliminado = pyqtSignal()  # Nueva señal
+
     def __init__(self):
         super().__init__()
 
@@ -470,7 +481,7 @@ class EliminarProducto(QMainWindow):
         
         try:
             from conexion import mostrar_productos
-            productos = mostrar_productos()
+            productos = mostrar_productos(ocultar_especiales=True)
             # Agregamos solo los nombres de los productos al combo
             for producto in productos:
                 self.producto_combo.addItem(producto[1])  # producto[1] es el nombre
@@ -494,6 +505,7 @@ class EliminarProducto(QMainWindow):
                             break
                     
                     QMessageBox.information(self, "Éxito", "Producto eliminado correctamente")
+                    self.producto_eliminado.emit()  # Emitir señal
                     self.producto_combo.clear()
                     self.cargar_productos()
                 except Exception as e:
@@ -503,6 +515,8 @@ class EliminarProducto(QMainWindow):
 
 ##########################################################################################################
 class EditarProducto(QMainWindow):
+    producto_editado = pyqtSignal()  # Nueva señal
+
     def __init__(self):
         super().__init__()
 
@@ -614,7 +628,7 @@ class EditarProducto(QMainWindow):
         self.producto_combo.addItem("Seleccionar producto")
         try:
             from conexion import mostrar_productos
-            productos = mostrar_productos()
+            productos = mostrar_productos(ocultar_especiales=True)
             for producto in productos:
                 self.producto_combo.addItem(producto[1])
         except Exception as e:
@@ -698,6 +712,7 @@ class EditarProducto(QMainWindow):
                     break
                     
             QMessageBox.information(self, "Éxito", "Producto actualizado correctamente")
+            self.producto_editado.emit()  # Emitir señal
             self.close()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo actualizar el producto:\n{str(e)}")
@@ -789,7 +804,7 @@ class ListaProducto(QMainWindow):
     def cargar_datos(self):
         try:
             from conexion import mostrar_productos
-            productos = mostrar_productos()
+            productos = mostrar_productos(ocultar_especiales=True)
             
             self.table_widget.setRowCount(len(productos))
             

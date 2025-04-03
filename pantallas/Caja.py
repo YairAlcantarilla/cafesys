@@ -24,7 +24,7 @@ class CajaI(QMainWindow):
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
         background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/Caja1 (2).png')
+        pixmap = QPixmap('imagenes/CAJAPR.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)

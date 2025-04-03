@@ -54,15 +54,32 @@ def modificar_dato(tabla, columna_id, valor_id, dato_nuevo):
         conexion.commit()
         cursor.close()
         
-def mostrar_productos():
-    conexion = conectar_db()
-    if conexion:
+def mostrar_productos(ocultar_especiales=True):
+    try:
+        conexion = conectar_db()
         cursor = conexion.cursor()
-        cursor.execute("SELECT * FROM Producto")
-        registros = cursor.fetchall()
+        
+        if ocultar_especiales:
+            # Query que excluye productos con "Comida" o "Bebida" en el nombre
+            query = """
+                SELECT * FROM Producto 
+                WHERE Nombre NOT LIKE '%Comida%' 
+                AND Nombre NOT LIKE '%Bebida%'
+                ORDER BY Nombre
+            """
+        else:
+            # Query original que muestra todos los productos
+            query = "SELECT * FROM Producto ORDER BY Nombre"
+            
+        cursor.execute(query)
+        productos = cursor.fetchall()
+        cursor.close()
         conexion.close()
-        return registros
-    return[]
+        return productos
+        
+    except Exception as e:
+        print(f"Error al mostrar productos: {e}")
+        return []
 
 def obtener_categorias():
     try:
@@ -157,20 +174,30 @@ def eliminar_producto(nombre_producto):
     except Exception as e:
         raise Exception(f"Error al eliminar el producto: {str(e)}")
 
-def obtener_producto_por_nombre(nombre):
+def obtener_producto_por_nombre(nombre, ocultar_especiales=True):
     try:
         conexion = conectar_db()
         cursor = conexion.cursor()
-        cursor.execute("""
-            SELECT ID_Producto, Nombre, Precio, Cantidad, Categoria 
-            FROM Producto 
-            WHERE Nombre = %s
-        """, (nombre,))
+        
+        if ocultar_especiales:
+            query = """
+                SELECT * FROM Producto 
+                WHERE Nombre = %s 
+                AND Nombre NOT LIKE '%Comida%'
+                AND Nombre NOT LIKE '%Bebida%'
+            """
+        else:
+            query = "SELECT * FROM Producto WHERE Nombre = %s"
+            
+        cursor.execute(query, (nombre,))
         producto = cursor.fetchone()
+        cursor.close()
         conexion.close()
         return producto
+        
     except Exception as e:
-        raise Exception(f"Error al obtener producto: {str(e)}")
+        print(f"Error al obtener producto: {e}")
+        return None
 
 def actualizar_producto(nombre_original, datos):
     try:

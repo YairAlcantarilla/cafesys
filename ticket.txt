@@ -2,15 +2,19 @@
 CAFETERÍA SISTEMA
 ========================================
 Fecha: 01/04/2025
-Cliente: Cliente General
+Cliente: Ernesto
 ----------------------------------------
 PRODUCTO          CANT    PRECIO    TOTAL
 ----------------------------------------
-Leche             1      $15.00  $15.00
-Pan               1      $10.00  $10.00
+Capuccino         1      $30.00  $30.00
+Cafe Mocca        1      $40.00  $40.00
+Cafe Espresso     1      $70.00  $70.00
+Pastel            1      $40.00  $40.00
+Croissant         1      $40.00  $40.00
+Pan Tipo Concha   1      $30.00  $30.00
 ----------------------------------------
-Total Artículos: 2
-Total a Pagar: $25.00
+Total Artículos: 6
+Total a Pagar: $250.00
 ========================================
 ¡Gracias por su compra!
 ========================================
