@@ -1,6 +1,6 @@
 import sys
 import conexion
-import p_inicio, Caja, P_Registros, main_p, personal, login, p_inventario
+import p_inicio, Caja, P_Registros, main_p, personal, login, p_inventario, P_Ajustes
 from PyQt6.QtCore import Qt, QPropertyAnimation
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout, 
@@ -19,7 +19,7 @@ class MainPersonal(QMainWindow):
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
 
-        # fondo
+        
         background_label = QLabel(central_widget)
         pixmap = QPixmap('imagenes/Mpersonal.png')
         background_label.setPixmap(pixmap)
@@ -27,15 +27,15 @@ class MainPersonal(QMainWindow):
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
 
-        # Crear la tabla
+        
         self.table_widget = QTableWidget(self)
-        self.table_widget.setGeometry(160, 145, 650, 555)  # x, y, width, height
+        self.table_widget.setGeometry(160, 145, 650, 555)  
         self.table_widget.setColumnCount(6)
         self.table_widget.setHorizontalHeaderLabels([
             "ID", "Contraseña", "Nombre", "Teléfono", "Dirección", "ID Puesto"
         ])
 
-        # Estilo de la tabla
+        
         self.table_widget.setStyleSheet("""
             QTableWidget {
                 background-color: #111A2D;
@@ -56,12 +56,12 @@ class MainPersonal(QMainWindow):
             }
         """)
 
-        # Ajustar el ancho de las columnas
+        
         header = self.table_widget.horizontalHeader()
         for i in range(6):
             header.setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
 
-        # Cargar datos
+        
         self.cargar_datos()
 
         button_configs = [
@@ -87,13 +87,13 @@ class MainPersonal(QMainWindow):
             button.move(x, y)
             button.setStyleSheet("""
                 QPushButton {
-                    background-color: rgba(255, 255, 255, 50);
+                    background-color: rgba(255, 255, 255, 0);
                     border: 0px solid white;
                     border-radius: 10px;
                     color: transparent;
             }
             QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0);
+                background-color: rgba(255, 255, 255, 30);
             }
             QPushButton:pressed {
                 background-color: rgba(230, 170, 104, 80);
@@ -146,7 +146,7 @@ class MainPersonal(QMainWindow):
             respuesta = QMessageBox.question(
                 self,
                 "Confirmación",
-                "¿Está seguro de que desea salir de producto?",
+                "¿Está seguro de que desea salir de personal?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
 
@@ -159,7 +159,7 @@ class MainPersonal(QMainWindow):
             respuesta = QMessageBox.question(
                 self,
                 "Confirmación",
-                "¿Está seguro de que desea salir de producto?",
+                "¿Está seguro de que desea salir de personal?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
 
@@ -173,7 +173,7 @@ class MainPersonal(QMainWindow):
             respuesta = QMessageBox.question(
                 self,
                 "Confirmación",
-                "¿Está seguro de que desea salir de producto?",
+                "¿Está seguro de que desea salir de personal?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
 
@@ -186,7 +186,7 @@ class MainPersonal(QMainWindow):
             respuesta = QMessageBox.question(
                 self,
                 "Confirmación",
-                "¿Está seguro de que desea salir de producto?",
+                "¿Está seguro de que desea salir de personal?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
 
@@ -198,12 +198,25 @@ class MainPersonal(QMainWindow):
             respuesta = QMessageBox.question(
                 self,
                 "Confirmación",
-                "¿Está seguro de que desea salir de producto?",
+                "¿Está seguro de que desea salir de personal?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
 
             if respuesta == QMessageBox.StandardButton.Yes:
                 self.main_window = p_inventario.MainWindow()
+                self.main_window.show()
+                self.close()
+        
+        elif button.text() == "Ajustes":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de Personal?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = P_Ajustes.MainAjustes()
                 self.main_window.show()
                 self.close()
 
@@ -868,7 +881,7 @@ class GenerarQR(QMainWindow):
         self.setCentralWidget(central_widget)
         
         background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/ADDPER.png')
+        pixmap = QPixmap('imagenes/GQR.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         

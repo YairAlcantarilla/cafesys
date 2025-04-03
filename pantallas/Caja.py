@@ -24,14 +24,14 @@ class CajaI(QMainWindow):
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
         background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/CAJAPR.png')
+        pixmap = QPixmap('imagenes/CAJAFINAL.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
 
         input_configs = [
-            ["Nombre del cliente", 825, 305, 150, 38],  # Changed from "Fecha"
+            ["Nombre del cliente", 825, 318, 150, 38],  
         ]
 
         self.inputs = []
@@ -57,8 +57,8 @@ class CajaI(QMainWindow):
             ["Comida", 851, 126, 132, 132],
             ["Combos", 993, 126, 132, 132],
             ["Regresar", 1280, 25, 50, 50],
-            ["PEfectivo", 914, 505, 77, 75],
-            ["PTarjeta", 1015, 505, 77, 75],
+            ["PEfectivo", 914, 443, 77, 75],
+            ["PTarjeta", 1015, 443, 77, 75],
             ["Ayuda", 1210, 25, 50, 50],
             ["Confirmar", 842, 638, 94, 94],  
         ]

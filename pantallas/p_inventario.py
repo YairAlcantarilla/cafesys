@@ -1,8 +1,8 @@
 import sys
 import p_inicio
 import conexion
-import main_p
-from PyQt6.QtCore import Qt
+import Caja, P_Registros, personal, login, p_inventario, main_p, P_Ajustes, p_inicio
+from PyQt6.QtCore import Qt, QPropertyAnimation
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout, 
                            QWidget, QPushButton, QMessageBox, QLineEdit, 
@@ -64,15 +64,15 @@ class MainWindow(QMainWindow):
         self.cargar_datos()
 
         button_configs = [
-            ["Caja", 30, 152, 200, 50],
-            ["Reportes", 30, 227, 200, 50],
-            ["Productos", 30, 303, 200, 50],
-            ["Personal", 30, 378, 200, 50],
-            ["Inventario", 30, 454, 200, 50],
-            ["Ajustes", 30, 530, 200, 50],
-            ["Salir", 30, 605, 200, 50],
+            ["Caja", 30, 152, 60, 50],
+            ["Reportes", 30, 227, 60, 50],
+            ["Productos", 30, 303, 60, 50],
+            ["Personal", 30, 378, 60, 50],
+            ["Inventario", 30, 454, 60, 50],
+            ["Ajustes", 30, 530, 60, 50],
+            ["Salir", 30, 605, 60, 50],
             #otrosbotones
-            ["Regresar", 1270, 655, 77, 70],
+            ["Regresar", 1278, 645, 73, 67],
             
         ]
 
@@ -89,7 +89,7 @@ class MainWindow(QMainWindow):
                     color: transparent;
             }
             QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0);
+                background-color: rgba(255, 255, 255, 20);
             }
             QPushButton:pressed {
                 background-color: rgba(230, 170, 104, 0);
@@ -121,26 +121,121 @@ class MainWindow(QMainWindow):
 
     def button_clicked(self):
         button = self.sender()
-        if button.text() == "Agregar Producto":
-            self.main_window = AgregarProducto()
-            self.main_window.show()
-            self.close()
-        elif button.text() == "Eliminar":
-            self.main_window = EliminarProducto()
-            self.main_window.show()
-            self.close()
-        elif button.text() == "Editar":
-            self.main_window = EditarProducto()
-            self.main_window.show()
-            self.close()
-        elif button.text() == "Lista":
-            self.main_window = ListaProducto()
-            self.main_window.show()
-            self.close()
+
+        if button.text() == "Caja":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de Inventario?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = Caja.CajaI()
+                self.main_window.show()
+                self.close()
+
         elif button.text() == "Regresar":
-            self.main_window = main_p.MainPWindow()  
-            self.main_window.show()
-            self.close()
+            self.cambioP = p_inicio.MainWindow()
+            self.fade_out()
+
+        elif button.text() == "Reportes":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de Inventario?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = P_Registros.MainR()
+                self.main_window.show()
+                self.close()
+
+
+        elif button.text() == "Productos":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de Inventario?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = main_p.MainPWindow()
+                self.main_window.show()
+                self.close()
+        
+        elif button.text() == "Personal":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de Inventario?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = personal.MainPersonal()
+                self.main_window.show()
+                self.close()
+        elif button.text() == "Inventario":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de Inventario?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = p_inventario.MainWindow()
+                self.main_window.show()
+                self.close()
+        
+        elif button.text() == "Ajustes":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de que desea salir de Inventario?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = P_Ajustes.MainAjustes()
+                self.main_window.show()
+                self.close()
+
+        elif button.text() == "Salir":
+            respuesta = QMessageBox.question(
+                self,
+                "Confirmación",
+                "¿Está seguro de salir a la pantalla principal?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if respuesta == QMessageBox.StandardButton.Yes:
+                self.main_window = login.LoginWindow()
+                self.main_window.show()
+                self.close()
+        
+    def fade_out(self):
+        self.animation = QPropertyAnimation(self, b"windowOpacity")
+        self.animation.setDuration(150) 
+        self.animation.setStartValue(1.0)  
+        self.animation.setEndValue(0.0)  
+        self.animation.finished.connect(self.open_new_window) 
+        self.animation.start()
+
+    def open_new_window(self):
+        self.cambioP.setWindowOpacity(0.0)  
+        self.cambioP.show()
+        self.new_animation = QPropertyAnimation(self.cambioP, b"windowOpacity")
+        self.new_animation.setDuration(150)  
+        self.new_animation.setStartValue(0.0)  
+        self.new_animation.setEndValue(1.0)  
+        self.new_animation.start()
+        self.close()
+       
+
 ########################################################################################################
 class AgregarProducto(QMainWindow):
     def __init__(self):

@@ -3,7 +3,7 @@ import Caja
 import personal
 import main_p
 import p_inventario
-import P_Registros
+import P_Registros, P_Ajustes
 import sys
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
@@ -84,6 +84,10 @@ class MainWindow(QMainWindow):
             self.close()
         elif button.text() == "Reportes":
             self.main_window = P_Registros.MainR()
+            self.main_window.show()
+            self.close()
+        elif button.text() == "Ajustes":
+            self.main_window = P_Ajustes.MainAjustes()
             self.main_window.show()
             self.close()
         elif button.text() == "Salir":
