@@ -296,7 +296,7 @@ class MainAjustes(QMainWindow):
             # Configuración de la base de datos
             DB_NAME = "tienda"
             DB_USER = "root"
-            DB_PASS = "895488"
+            DB_PASS = "894388"
             DB_HOST = "localhost"
 
             # Crear nombre de archivo con fecha
@@ -347,7 +347,7 @@ class MainAjustes(QMainWindow):
             # Configuración de la base de datos
             DB_NAME = "tienda"
             DB_USER = "root"
-            DB_PASS = ""
+            DB_PASS = "894388"
             DB_HOST = "localhost"
 
             # Abrir diálogo para seleccionar archivo

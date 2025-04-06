@@ -1,20 +1,19 @@
 ========================================
 CAFETERÍA SISTEMA
 ========================================
-Fecha: 01/04/2025
-Cliente: Ernesto
+Fecha: 05/04/2025
+Cliente: Fulano
 ----------------------------------------
 PRODUCTO          CANT    PRECIO    TOTAL
 ----------------------------------------
 Capuccino         1      $30.00  $30.00
-Cafe Mocca        1      $40.00  $40.00
-Cafe Espresso     1      $70.00  $70.00
 Pastel            1      $40.00  $40.00
-Croissant         1      $40.00  $40.00
-Pan Tipo Concha   1      $30.00  $30.00
 ----------------------------------------
-Total Artículos: 6
-Total a Pagar: $250.00
+Total Artículos: 2
+Total a Pagar: $70.00
+----------------------------------------
+Efectivo Recibido: $100.00
+Cambio: $30.00
 ========================================
 ¡Gracias por su compra!
 ========================================

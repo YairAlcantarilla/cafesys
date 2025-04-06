@@ -2,6 +2,7 @@ import mysql.connector
 from PyQt6.QtWidgets import QMessageBox
 import qrcode
 import os
+from PIL import Image, ImageDraw, ImageFont
 
 
 def conectar_db():
@@ -9,7 +10,7 @@ def conectar_db():
         conexion =mysql.connector.connect(
             host= "localhost",
             user = "root",
-            passwd="1234",
+            passwd="894388",
             database="tienda"
         )
         return conexion
@@ -99,7 +100,7 @@ def mostrar_usuarios():
     if conexion:
         try:
             cursor = conexion.cursor()
-            cursor.execute("SELECT id_usuario, contrasenna, nombre, telefono, Direccion, ID_Puesto FROM usuario")
+            cursor.execute("SELECT id_usuario, contrasenna, nombre, correo, Direccion, ID_Puesto FROM usuario")
             registros = cursor.fetchall()
             return registros
         except Exception as e:
@@ -114,12 +115,12 @@ def insertar_usuario(datos):
         try:
             cursor = conexion.cursor()
             # No incluimos el id_usuario ya que lo generará el trigger
-            sql = """INSERT INTO usuario (contrasenna, nombre, telefono, Direccion, ID_Puesto) 
+            sql = """INSERT INTO usuario (contrasenna, nombre, correo, Direccion, ID_Puesto) 
                      VALUES (%s, %s, %s, %s, %s)"""
             valores = (
                 datos['contrasenna'],
                 datos['nombre'],
-                datos['telefono'],
+                datos['correo'],
                 datos['Direccion'],
                 datos['ID_Puesto']
             )
@@ -296,7 +297,7 @@ def obtener_datos_usuario(ID_usuario):
         
         # Consulta para obtener los datos necesarios
         consulta = """
-            SELECT ID_usuario, contrasenna, Nombre, ID_Puesto 
+            SELECT ID_usuario, contrasenna, Nombre, correo, ID_Puesto 
             FROM usuario 
             WHERE ID_usuario = %s
         """
@@ -407,8 +408,6 @@ def obtener_precio_producto(nombre_producto):
     try:
         connection = conectar_db()
         cursor = connection.cursor()
-        
-        # Cambiar 'productos' a 'Producto'
         cursor.execute("SELECT Precio FROM Producto WHERE Nombre = %s", (nombre_producto,))
         resultado = cursor.fetchone()
         
@@ -428,8 +427,7 @@ def insertar_venta(datos_venta):
     try:
         connection = conectar_db()
         cursor = connection.cursor()
-        
-        # Define SQL statement with exact column names
+
         sql = """
             INSERT INTO ventas (
                 producto,
@@ -440,13 +438,11 @@ def insertar_venta(datos_venta):
                 id_usuario
             ) VALUES (%s, %s, %s, %s, %s, %s)
         """
-        
-        # Create tuple of values in the same order
         params = (
             datos_venta['producto'],
             datos_venta['fecha'],
             datos_venta['cantidad'],
-            float(datos_venta['precio_total']),  # Convert Decimal to float
+            float(datos_venta['precio_total']),
             datos_venta['forma_pago'],
             datos_venta['id_usuario']
         )
@@ -458,8 +454,6 @@ def insertar_venta(datos_venta):
         print(f"Cantidad de parámetros: {len(params)}")
         for i, param in enumerate(params):
             print(f"Param {i+1}: {param} ({type(param)})")
-            
-        # Execute with parameterized query
         cursor.execute(sql, params)
         connection.commit()
         return True
@@ -479,8 +473,6 @@ def obtener_usuario_activo():
     try:
         connection = conectar_db()
         cursor = connection.cursor()
-        
-        # Get first available user ID
         cursor.execute("SELECT ID_usuario FROM usuario LIMIT 1")
         result = cursor.fetchone()
         
@@ -494,3 +486,47 @@ def obtener_usuario_activo():
     finally:
         if connection:
             connection.close()
+
+def generar_gafete(datos_usuario, qr_path):
+    try:
+        # Cargar la imagen de plantilla
+        gafete = Image.open('imagenes/plantilla_gafete.png')
+        draw = ImageDraw.Draw(gafete)
+        
+        # Cargar fuente
+        try:
+            font_name = ImageFont.truetype("arial.ttf", 30)
+            font_id = ImageFont.truetype("arial.ttf", 24)
+        except:
+            font_name = ImageFont.load_default()
+            font_id = ImageFont.load_default()
+
+        # Configurar posiciones
+        NOMBRE_POS = (243, 708)  # (x, y) para el nombre
+        ID_POS = (250, 783)      # (x, y) para el ID
+        QR_POS = (123, 284)      # (x, y) para el QR
+        QR_SIZE = (338, 338)     # Tamaño del QR
+
+        # Agregar nombre y ID sin etiquetas
+        draw.text(NOMBRE_POS, f"{datos_usuario[2]}", fill='black', font=font_name)
+        draw.text(ID_POS, f"{datos_usuario[0]}", fill='black', font=font_id)
+
+        # Agregar QR
+        qr_img = Image.open(qr_path)
+        qr_img = qr_img.resize(QR_SIZE)
+        gafete.paste(qr_img, QR_POS)
+
+        # Crear directorio si no existe
+        gafete_dir = "./gafetes"
+        if not os.path.exists(gafete_dir):
+            os.makedirs(gafete_dir)
+
+        # Guardar gafete
+        gafete_path = f"{gafete_dir}/gafete_{datos_usuario[0]}.png"
+        gafete.save(gafete_path)
+        
+        return gafete_path
+
+    except Exception as e:
+        print(f"Error al generar gafete: {e}")
+        return None

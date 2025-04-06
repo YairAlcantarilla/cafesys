@@ -6,7 +6,7 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QApplication, QMainWindow, QLabel, QVBoxLayout, 
                            QWidget, QPushButton, QMessageBox, QLineEdit, 
                            QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QDialog, QSpinBox)
-import conexion  # Add this import at the top of the file
+import conexion 
 ####################################################################################################
 ####
 from PyQt6.QtWidgets import QGraphicsOpacityEffect
@@ -87,8 +87,8 @@ class CajaI(QMainWindow):
 
         ######################  Tabla de contenido  ####################################################
         self.table = QTableWidget(self)
-        self.table.setGeometry(40, 125, 618, 605)  # x, y, width, height
-        self.table.setColumnCount(4)  # Changed from 3 to 4 columns
+        self.table.setGeometry(40, 125, 618, 605) 
+        self.table.setColumnCount(4) 
         self.table.setHorizontalHeaderLabels(['Producto', 'Fecha', 'Cantidad', 'Precio'])  # Added 'Precio'
         
         # Configurar el estilo de la tabla
@@ -113,7 +113,7 @@ class CajaI(QMainWindow):
 
         # Ajustar el ancho de las columnas
         header = self.table.horizontalHeader()
-        for column in range(4):  # Changed from 3 to 4
+        for column in range(4): 
             header.setSectionResizeMode(column, QHeaderView.ResizeMode.Stretch)
 
         # Añadir el visor de imágenes
@@ -127,6 +127,10 @@ class CajaI(QMainWindow):
     def button_clicked(self):
         button = self.sender()
         if button.text() == "PEfectivo":
+
+            if not self.productos_temporales:
+                QMessageBox.warning(self, "Aviso", "Agregue productos antes de proceder al pago")
+                return
             self.pago_efectivo_window = PagoEfectivoWindow(self)
             self.pago_efectivo_window.show()
             return
@@ -134,30 +138,47 @@ class CajaI(QMainWindow):
             if not self.productos_temporales:
                 QMessageBox.warning(self, "Aviso", "No hay productos para confirmar")
                 return
+
+            if not hasattr(self, 'efectivo_recibido'):
+                QMessageBox.warning(self, "Aviso", "Primero debe ingresar el pago")
+                return
             
-            # Generar ticket y obtener total
-            total = self.generar_ticket()
-            
-            # Guardar la venta en la base de datos con forma de pago
-            self.guardar_venta(forma_pago='Efectivo')  # Or get this from a payment method selection
-            
-            # Mostrar mensaje de confirmación
-            QMessageBox.information(self, "Éxito", 
-                f"Venta confirmada\nTotal: ${total:.2f}\nTicket generado correctamente")
-            
-            # Limpiar la tabla y los productos temporales
-            self.limpiar_tabla()
-            self.productos_temporales.clear()
-            
+            if self.efectivo_recibido < sum(producto['precio'] for producto in self.productos_temporales):
+                QMessageBox.warning(self, "Error", "El efectivo recibido es insuficiente")
+                return
+
+            try:
+                self.guardar_venta(forma_pago='Efectivo')
+                total = self.generar_ticket()
+                
+                if total > 0:
+                    QMessageBox.information(self, "Éxito", 
+                        f"Venta confirmada\nTotal: ${total:.2f}\n"
+                        f"Efectivo: ${self.efectivo_recibido:.2f}\n"
+                        f"Cambio: ${self.cambio_calculado:.2f}\n"
+                        "Ticket generado correctamente")
+                
+                    self.limpiar_tabla()
+                    self.productos_temporales.clear()
+                    if hasattr(self, 'pago_efectivo_window'):
+                        self.pago_efectivo_window.close()
+                    delattr(self, 'efectivo_recibido')
+                    delattr(self, 'cambio_calculado')
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Error al procesar la venta: {str(e)}")
             return
         elif button.text() == "Bebida":
             self.ventana_bebidas = VentanaBebidas(self)
             self.ventana_bebidas.show()
-            return  # Don't call fade_out for this button
+            return
         elif button.text() == "Comida":
             self.ventana_comida = VentanaComida(self)
             self.ventana_comida.show()
-            return  # Don't call fade_out for this button
+            return 
+        elif button.text() == "Combos":
+            self.ventana_combos = VentanaCombos(self)
+            self.ventana_combos.show()
+            return
         elif button.text() == "Regresar":
             self.cambioP = login.LoginWindow()
             self.fade_out()
@@ -187,7 +208,6 @@ class CajaI(QMainWindow):
         self.table.setRowCount(0)
 
     def agregar_producto_temporal(self, producto, fecha, cantidad, precio_total):
-        # Agregar a la lista temporal
         self.productos_temporales.append({
             'producto': producto,
             'fecha': fecha,
@@ -206,91 +226,76 @@ class CajaI(QMainWindow):
 
     def guardar_venta(self, forma_pago='Efectivo', id_usuario=None):
         try:
-            # Get valid user ID from connection
             if id_usuario is None:
-                id_usuario = conexion.obtener_usuario_activo()  # We'll create this method
-                if id_usuario is None:
-                    raise Exception("No hay usuario válido para la venta")
+                id_usuario = 250103
 
-            # Este método se llamaría cuando se finalice la venta
             for producto in self.productos_temporales:
                 datos_venta = {
                     'producto': producto['producto'],
-                    'fecha': producto['fecha'],
+                    'fecha': QDate.currentDate().toString('yyyy-MM-dd'),
                     'cantidad': producto['cantidad'],
                     'precio_total': producto['precio'],
                     'forma_pago': forma_pago,
                     'id_usuario': id_usuario
                 }
-                
-                # Debug: Imprimir datos antes de enviar
-                print("Datos enviados a insertar_venta:")
-                for key, value in datos_venta.items():
-                    print(f"{key}: {value} ({type(value)})")
-                    
-                conexion.insertar_venta(datos_venta)
-            
-            # Limpiar datos temporales y tabla
-            self.productos_temporales.clear()
-            self.table.setRowCount(0)
-            
-            QMessageBox.information(self, "Éxito", "Venta registrada correctamente")
-            
+
+                if not conexion.insertar_venta(datos_venta):
+                    raise Exception("Error al insertar la venta en la base de datos")
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al guardar la venta: {str(e)}")
+            raise e
 
     def generar_ticket(self):
         """Genera un ticket de compra con los productos y totales"""
-        if not self.productos_temporales:
-            QMessageBox.warning(self, "Aviso", "No hay productos para generar ticket")
-            return
-
-        total_venta = 0
-        total_articulos = 0
-        ticket_text = []
-        
-        # Get customer name from input
-        nombre_cliente = self.inputs[0].text() or "Cliente General"
-
-        # Encabezado del ticket
-        ticket_text.append("=" * 40)
-        ticket_text.append("CAFETERÍA SISTEMA")
-        ticket_text.append("=" * 40)
-        ticket_text.append(f"Fecha: {QDate.currentDate().toString('dd/MM/yyyy')}")
-        ticket_text.append(f"Cliente: {nombre_cliente}")
-        ticket_text.append("-" * 40)
-        ticket_text.append("PRODUCTO          CANT    PRECIO    TOTAL")
-        ticket_text.append("-" * 40)
-
-        # Agregar productos
-        for producto in self.productos_temporales:
-            nombre = producto['producto'][:15].ljust(15)  # Limitar longitud del nombre
-            cantidad = str(producto['cantidad']).center(8)
-            precio_unit = f"${producto['precio']/producto['cantidad']:.2f}".rjust(8)
-            total = f"${producto['precio']:.2f}".rjust(8)
-            
-            ticket_text.append(f"{nombre}{cantidad}{precio_unit}{total}")
-            
-            total_venta += producto['precio']
-            total_articulos += producto['cantidad']
-
-        # Agregar totales
-        ticket_text.append("-" * 40)
-        ticket_text.append(f"Total Artículos: {total_articulos}")
-        ticket_text.append(f"Total a Pagar: ${total_venta:.2f}")
-        ticket_text.append("=" * 40)
-        ticket_text.append("¡Gracias por su compra!")
-        ticket_text.append("=" * 40)
-
-        # Guardar el ticket en un archivo
         try:
+            if not self.productos_temporales:
+                QMessageBox.warning(self, "Aviso", "No hay productos para generar ticket")
+                return 0.0
+
+            total_venta = sum(producto['precio'] for producto in self.productos_temporales)
+            total_articulos = sum(producto['cantidad'] for producto in self.productos_temporales)
+            
+            nombre_cliente = self.inputs[0].text() or "Cliente General"
+
+            ticket_text = [
+                "=" * 40,
+                "CAFETERÍA SISTEMA",
+                "=" * 40,
+                f"Fecha: {QDate.currentDate().toString('dd/MM/yyyy')}",
+                f"Cliente: {nombre_cliente}",
+                "-" * 40,
+                "PRODUCTO          CANT    PRECIO    TOTAL",
+                "-" * 40
+            ]
+
+            for producto in self.productos_temporales:
+                nombre = producto['producto'][:15].ljust(15)
+                cantidad = str(producto['cantidad']).center(8)
+                precio_unit = f"${producto['precio']/producto['cantidad']:.2f}".rjust(8)
+                total = f"${producto['precio']:.2f}".rjust(8)
+                ticket_text.append(f"{nombre}{cantidad}{precio_unit}{total}")
+
+            ticket_text.extend([
+                "-" * 40,
+                f"Total Artículos: {total_articulos}",
+                f"Total a Pagar: ${total_venta:.2f}",
+                "-" * 40,
+                f"Efectivo Recibido: ${self.efectivo_recibido:.2f}",
+                f"Cambio: ${self.cambio_calculado:.2f}",
+                "=" * 40,
+                "¡Gracias por su compra!",
+                "=" * 40
+            ])
+
             with open('ticket.txt', 'w', encoding='utf-8') as f:
                 f.write('\n'.join(ticket_text))
-            QMessageBox.information(self, "Éxito", "Ticket generado correctamente")
+
+            return total_venta
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al generar ticket: {str(e)}")
-
-        return total_venta
+            return 0.0
 
 ###############################################################################################
 class CajaImagenes(QGraphicsView):
@@ -339,11 +344,94 @@ class PagoEfectivoWindow(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Pago en Efectivo")
         self.setFixedSize(400, 300)
-        self.setStyleSheet("background-color: #192745;")
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #192745;
+            }
+            QLabel {
+                color: #E6AA68;
+                font-size: 14px;
+            }
+            QLineEdit {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                background-color: #111A2D;
+                color: #E6AA68;
+                font-size: 14px;
+                min-height: 30px;
+            }
+        """)
         
-        # Configurar para que sea una ventana flotante
-        self.setWindowModality(Qt.WindowModality.ApplicationModal)
-        self.setWindowFlags(Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint)
+        # Layout principal
+        layout = QVBoxLayout(self)
+        layout.setSpacing(15)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        self.total_a_pagar = float(sum(producto['precio'] for producto in parent.productos_temporales))
+
+        # Campo de total a pagar (no editable)
+        layout.addWidget(QLabel("Total a Pagar:"))
+        self.total_field = QLineEdit()
+        self.total_field.setReadOnly(True)
+        self.total_field.setText(f"${self.total_a_pagar:.2f}")
+        layout.addWidget(self.total_field)
+
+        # Campo para efectivo recibido
+        layout.addWidget(QLabel("Efectivo Recibido:"))
+        self.efectivo_field = QLineEdit()
+        self.efectivo_field.setPlaceholderText("Ingrese el monto recibido")
+        self.efectivo_field.textChanged.connect(self.calcular_cambio)
+        layout.addWidget(self.efectivo_field)
+
+        # Campo para mostrar el cambio (no editable)
+        layout.addWidget(QLabel("Cambio:"))
+        self.cambio_field = QLineEdit()
+        self.cambio_field.setReadOnly(True)
+        layout.addWidget(self.cambio_field)
+
+        # Agregar botón de guardar
+        self.guardar_btn = QPushButton("Guardar")
+        self.guardar_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #111A2D;
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                color: #E6AA68;
+                padding: 8px;
+                min-height: 35px;
+            }
+            QPushButton:hover {
+                background-color: rgba(230, 170, 104, 0.2);
+            }
+        """)
+        self.guardar_btn.clicked.connect(self.guardar_pago)
+        layout.addWidget(self.guardar_btn)
+
+    def calcular_cambio(self):
+        try:
+            efectivo = float(self.efectivo_field.text() or 0)
+            cambio = efectivo - self.total_a_pagar
+            self.cambio_field.setText(f"${cambio:.2f}")
+            self.guardar_btn.setEnabled(cambio >= 0)
+        except ValueError:
+            self.cambio_field.setText("Error")
+            self.guardar_btn.setEnabled(False)
+
+    def guardar_pago(self):
+        try:
+            efectivo = float(self.efectivo_field.text() or 0)
+            if efectivo < self.total_a_pagar:
+                QMessageBox.warning(self, "Error", "El efectivo recibido es insuficiente")
+                return
+            self.parent().efectivo_recibido = efectivo
+            self.parent().cambio_calculado = efectivo - self.total_a_pagar
+            
+            QMessageBox.information(self, "Éxito", "Pago guardado. Presione 'Confirmar' para finalizar la venta.")
+            self.close()
+            
+        except ValueError:
+            QMessageBox.warning(self, "Error", "Por favor ingrese un monto válido")
 
 #########################################################################################################
 class VentanaBebidas(QMainWindow):
@@ -434,15 +522,18 @@ class VentanaBebidas(QMainWindow):
 
     def agregar_bebida(self):
         bebida = self.bebida_combo.currentText()
+        
+        # Validar que no sea un nombre genérico
+        if bebida == "Bebidas" or not bebida:
+            QMessageBox.warning(self, "Error", "Por favor seleccione un producto")
+            return
+            
         cantidad = self.cantidad_spin.value()
         precio = conexion.obtener_precio_producto(bebida)
         
         if precio is not None:
             precio_total = precio * cantidad
-            # Obtener la fecha actual
             fecha_actual = QDate.currentDate().toString("yyyy-MM-dd")
-            
-            # Enviar datos a la ventana principal
             self.parent().agregar_producto_temporal(bebida, fecha_actual, cantidad, precio_total)
             self.close()
 
@@ -534,14 +625,121 @@ class VentanaComida(QMainWindow):
 
     def agregar_comida(self):
         comida = self.comida_combo.currentText()
+        
+        # Validar que no sea un nombre genérico
+        if comida == "Comida" or not comida:
+            QMessageBox.warning(self, "Error", "Por favor seleccione un producto")
+            return
+            
         cantidad = self.cantidad_spin.value()
         precio = conexion.obtener_precio_producto(comida)
         
         if precio is not None:
             precio_total = precio * cantidad
             fecha_actual = QDate.currentDate().toString("yyyy-MM-dd")
-            
             self.parent().agregar_producto_temporal(comida, fecha_actual, cantidad, precio_total)
+            self.close()
+
+#########################################################################################################
+class VentanaCombos(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Seleccionar Combo")
+        self.setFixedSize(400, 200)
+        
+        # Crear widget central
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        layout = QVBoxLayout(central_widget)
+        
+        # Dropdown para combos
+        self.combo_combo = QComboBox()
+        self.combo_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                background-color: #111A2D;
+                color: #E6AA68;
+                min-height: 30px;
+            }
+        """)
+        self.cargar_combos()
+        
+        # Spinbox para cantidad
+        self.cantidad_spin = QSpinBox()
+        self.cantidad_spin.setMinimum(1)
+        self.cantidad_spin.setStyleSheet("""
+            QSpinBox {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                background-color: #111A2D;
+                color: #E6AA68;
+                min-height: 30px;
+            }
+        """)
+        
+        # Botón agregar
+        self.agregar_btn = QPushButton("Agregar")
+        self.agregar_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #111A2D;
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                color: #E6AA68;
+                padding: 5px;
+                min-height: 30px;
+            }
+            QPushButton:hover {
+                background-color: rgba(230, 170, 104, 0.2);
+            }
+        """)
+        
+        # Labels con estilo
+        label_combo = QLabel("Seleccionar Combo:")
+        label_cantidad = QLabel("Cantidad:")
+        label_combo.setStyleSheet("color: #E6AA68;")
+        label_cantidad.setStyleSheet("color: #E6AA68;")
+        
+        layout.addWidget(label_combo)
+        layout.addWidget(self.combo_combo)
+        layout.addWidget(label_cantidad)
+        layout.addWidget(self.cantidad_spin)
+        layout.addWidget(self.agregar_btn)
+        
+        self.agregar_btn.clicked.connect(self.agregar_combo)
+
+    def cargar_combos(self):
+        try:
+            combos = conexion.mostrar_combos()
+            if combos:
+                # Extraer solo los nombres de los combos
+                nombres_combos = [combo[0] for combo in combos]
+                self.combo_combo.addItems(nombres_combos)
+                
+                # Almacenar la información completa de los combos
+                self.combos_info = {combo[0]: {'producto1': combo[1], 
+                                             'producto2': combo[2], 
+                                             'precio': combo[3]} 
+                                  for combo in combos}
+            else:
+                QMessageBox.warning(self, "Aviso", "No hay combos disponibles")
+                
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar combos: {str(e)}")
+
+    def agregar_combo(self):
+        combo_nombre = self.combo_combo.currentText()
+        cantidad = self.cantidad_spin.value()
+        
+        if combo_nombre in self.combos_info:
+            combo_info = self.combos_info[combo_nombre]
+            precio_total = combo_info['precio'] * cantidad
+            fecha_actual = QDate.currentDate().toString("yyyy-MM-dd")
+            
+            # Agregar el combo como un producto
+            self.parent().agregar_producto_temporal(combo_nombre, fecha_actual, cantidad, precio_total)
             self.close()
 
 #########################################################################################################

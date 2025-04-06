@@ -32,7 +32,7 @@ class MainPersonal(QMainWindow):
         self.table_widget.setGeometry(160, 145, 650, 555)  
         self.table_widget.setColumnCount(6)
         self.table_widget.setHorizontalHeaderLabels([
-            "ID", "Contraseña", "Nombre", "Teléfono", "Dirección", "ID Puesto"
+            "ID", "Contraseña", "Nombre", "Correo", "Dirección", "ID Puesto"
         ])
 
         
@@ -270,11 +270,11 @@ class AgregarE(QMainWindow):
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
 
-        # Modificar input_configs para quitar el campo de ocupación
+        # Modificar input_configs para incluir el campo de nombre
         input_configs = [
-            ["Nombre", 195, 152, 270, 40],
+            ["Nombre", 195, 152, 270, 40],      # Nuevo campo de nombre
             ["Direccion", 195, 225, 270, 40],
-            ["Telefono", 195, 298, 270, 40], 
+            ["Correo", 195, 298, 270, 40], 
             ["Contraseña", 195, 371, 270, 40] 
         ]
 
@@ -301,7 +301,7 @@ class AgregarE(QMainWindow):
         
         # Radio button para Administrador
         self.admin_radio = QRadioButton("Administrador", self)
-        self.admin_radio.move(195, 446)  # Mover a la posición del input eliminado
+        self.admin_radio.move(195, 446) 
         self.admin_radio.setStyleSheet("""
             QRadioButton {
                 color: #E6AA68;
@@ -321,7 +321,7 @@ class AgregarE(QMainWindow):
         
         # Radio button para Cajero
         self.cajero_radio = QRadioButton("Cajero", self)
-        self.cajero_radio.move(350, 446)  # 30 píxeles debajo del radio de administrador
+        self.cajero_radio.move(350, 446) 
         self.cajero_radio.setStyleSheet("""
             QRadioButton {
                 color: #E6AA68;
@@ -401,23 +401,25 @@ class AgregarE(QMainWindow):
                 QMessageBox.warning(self, "Advertencia", "Por favor seleccione un tipo de usuario")
                 return
 
-            # Validar teléfono (máximo 10 dígitos)
-            telefono = self.inputs[2].text()
-            if not telefono.isdigit() or len(telefono) > 10:
-                QMessageBox.warning(self, "Advertencia", "El teléfono debe contener solo números y máximo 10 dígitos")
+            # Validar formato de correo electrónico
+            import re
+            correo = self.inputs[2].text()  # Ahora el correo está en el índice 2
+            patron_correo = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(patron_correo, correo):
+                QMessageBox.warning(self, "Advertencia", "Por favor ingrese un correo electrónico válido")
                 return
                 
             datos = {
-                "nombre": self.inputs[0].text(),        
-                "Direccion": self.inputs[1].text(),     
-                "telefono": telefono,                   
-                "contrasenna": self.inputs[3].text(),   
-                "ID_Puesto": tipo_usuario              
+                "nombre": self.inputs[0].text(),        # Nombre
+                "Direccion": self.inputs[1].text(),     # Dirección
+                "correo": correo,                       # Correo
+                "contrasenna": self.inputs[3].text(),   # Contraseña
+                "ID_Puesto": tipo_usuario              # Tipo de usuario
             }
 
             if all(datos.values()):
                 try:
-                    conexion.insertar_dato("usuario", datos)
+                    conexion.insertar_usuario(datos)  # Usar insertar_usuario en lugar de insertar_dato
                     # Update main window if it exists
                     for widget in QApplication.topLevelWidgets():
                         if isinstance(widget, MainPersonal):
@@ -614,7 +616,7 @@ class EditarE(QMainWindow):
         # Campos de entrada
         input_configs = [
             ["Direccion", 195, 225, 270, 40],
-            ["Telefono", 195, 298, 270, 40], 
+            ["Correo", 195, 298, 270, 40], 
             ["Contraseña", 195, 371, 270, 40] 
         ]
 
@@ -732,7 +734,7 @@ class EditarE(QMainWindow):
                 
                 if usuario_actual:
                     self.inputs[0].setText(str(usuario_actual[4]))  # Dirección
-                    self.inputs[1].setText(str(usuario_actual[3]))  # Teléfono
+                    self.inputs[1].setText(str(usuario_actual[3]))  # Correo
                     self.inputs[2].setText(str(usuario_actual[1]))  # Contraseña
                     
                     # Seleccionar el radio button correspondiente
@@ -757,17 +759,19 @@ class EditarE(QMainWindow):
 
             tipo_usuario = 1 if self.admin_radio.isChecked() else 2
 
-            # Validar teléfono
-            telefono = self.inputs[1].text()
-            if not telefono.isdigit() or len(telefono) > 10:
-                QMessageBox.warning(self, "Advertencia", "El teléfono debe contener solo números y máximo 10 dígitos")
+            # Validar formato de correo electrónico
+            import re
+            correo = self.inputs[1].text()
+            patron_correo = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(patron_correo, correo):
+                QMessageBox.warning(self, "Advertencia", "Por favor ingrese un correo electrónico válido")
                 return
 
             try:
                 id_usuario = self.usuario_combo.currentText().split(" - ")[0]
                 datos = {
                     "Direccion": self.inputs[0].text(),
-                    "telefono": telefono,
+                    "correo": correo,
                     "contrasenna": self.inputs[2].text(),
                     "ID_Puesto": tipo_usuario
                 }
@@ -877,7 +881,7 @@ class GenerarQR(QMainWindow):
         self.setWindowTitle("Generar QR")
         self.setFixedSize(500, 650)
 
-        central_widget = QWidget(selgf)
+        central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
         
         background_label = QLabel(central_widget)
@@ -958,6 +962,7 @@ class GenerarQR(QMainWindow):
                     datos_usuario = conexion.obtener_datos_usuario(id_usuario)
                     
                     if datos_usuario:
+                        # Generar QR
                         qr_path = conexion.generar_qr_usuario(datos_usuario[0], datos_usuario[1])
                         if qr_path:
                             # Mostrar QR en la ventana
@@ -968,8 +973,18 @@ class GenerarQR(QMainWindow):
                                 Qt.TransformationMode.SmoothTransformation
                             )
                             self.qr_label.setPixmap(scaled_pixmap)
-                            QMessageBox.information(self, "Éxito", 
-                                f"Código QR generado correctamente")
+                            
+                            # Generar gafete
+                            gafete_path = conexion.generar_gafete(datos_usuario, qr_path)
+                            if gafete_path:
+                                QMessageBox.information(
+                                    self, 
+                                    "Éxito",
+                                    f"Código QR y gafete generados correctamente.\nGafete guardado en: {gafete_path}"
+                                )
+                            else:
+                                QMessageBox.warning(self, "Advertencia", 
+                                    "Se generó el QR pero hubo un error al crear el gafete")
                         else:
                             QMessageBox.warning(self, "Error", 
                                 "No se pudo generar el código QR")
@@ -978,7 +993,7 @@ class GenerarQR(QMainWindow):
                             "No se encontraron datos del usuario")
                 except Exception as e:
                     QMessageBox.critical(self, "Error", 
-                        f"Error al generar QR: {str(e)}")
+                        f"Error al generar QR y gafete: {str(e)}")
             else:
                 QMessageBox.warning(self, "Advertencia", 
                     "Por favor seleccione un usuario")
