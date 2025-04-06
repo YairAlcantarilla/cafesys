@@ -540,3 +540,82 @@ def generar_gafete(datos_usuario, qr_path):
     except Exception as e:
         print(f"Error al generar gafete: {e}")
         return None
+
+def obtener_combo_por_nombre(nombre_combo):
+    try:
+        conexion = conectar_db() 
+        cursor = conexion.cursor()
+
+        cursor.execute("SELECT id, nombre, precio FROM combos WHERE nombre = %s", (nombre_combo,))
+        combo = cursor.fetchone()
+
+        conexion.close()
+        return combo
+    except Exception as e:
+        print(f"Error al obtener combo: {e}")
+        return None
+
+def cargar_datos_combo(nombre_combo):
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+
+        cursor.execute("""
+            SELECT nombre, producto1, producto2, precio 
+            FROM combos 
+            WHERE nombre = %s
+        """, (nombre_combo,))
+        
+        combo = cursor.fetchone()
+        conexion.close()
+        
+        return combo
+        
+    except Exception as e:
+        print(f"Error al cargar los datos del combo: {str(e)}")
+        return None
+
+def obtener_descuentos():
+    conexion = conectar_db()
+    cursor = conexion.cursor()
+    
+    cursor.execute("""
+            SELECT ID_descuento, Porcentaje, Producto_ID, Precio_final FROM descuentos
+        """)
+    descuentos = cursor.fetchall()
+    conexion.close()
+    return descuentos
+
+def agregar_descuento(producto, descuento, precio_final):
+    conexion = conectar_db()
+    cursor = conexion.cursor()
+    cursor.execute("INSERT INTO descuentos (Porcentaje, Producto_ID, Precio_final) VALUES (%s, %s, %s)", 
+                   (descuento, producto, precio_final))
+    conexion.commit()
+    conexion.close()
+
+def mostrar_descuentos():
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        cursor.execute("SELECT ID_descuento FROM descuentos")
+        resultados = cursor.fetchall()
+        conexion.close()
+
+        descuentos = [fila[0] for fila in resultados]
+        return descuentos
+    
+    except Exception as e:
+        print(f"Error al obtener descuentos: {e}")
+        return []
+
+def eliminar_descuento(nombre_descuento):
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        cursor.execute("DELETE FROM descuentos WHERE ID_descuento = %s", (nombre_descuento,))
+        conexion.commit()
+        conexion.close()
+    except Exception as e:
+        print(f"Error al eliminar descuento: {e}")
+        raise

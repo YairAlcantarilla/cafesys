@@ -1,11 +1,11 @@
 import sys
 import p_inicio
 import main_p
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QLabel, QVBoxLayout, 
     QWidget, QPushButton, QComboBox, QMessageBox, 
-    QTableWidget, QHeaderView, QTableWidgetItem, QLineEdit
+    QTableWidget, QHeaderView, QTableWidgetItem, QLineEdit, QTextEdit
 )
 from PyQt6.QtGui import QPixmap
 from conexion import eliminar_combo, mostrar_combos
@@ -123,7 +123,7 @@ class MainCombo(QMainWindow):
             self.dialog = EliminarCombo()
             self.dialog.show()
         elif button.text() == "Editar":
-            self.dialog = Editarcombo()
+            self.dialog = EditarCombo()
             self.dialog.show()
         elif button.text() == "Regresar":
             self.main_window = main_p.MainPWindow()  
@@ -388,40 +388,109 @@ class EliminarCombo(QMainWindow):
 
 ###########################################################################################       
 ################################################################################################################
-class Editarcombo(QMainWindow):
+class EditarCombo(QMainWindow):
+    combo_editado = pyqtSignal()
+
     def __init__(self):
         super().__init__()
-
-        self.setWindowTitle("Agregar combo")
-        self.setFixedSize(1366, 768)
-
+        self.setWindowTitle("Editar Combo")
+        self.setFixedSize(500, 500)
+        
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
+        layout = QVBoxLayout(central_widget)
 
-        # fondo agregar
-        background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/Editar combo.png')
-        background_label.setPixmap(pixmap)
-        background_label.setScaledContents(True)
-        central_layout = QVBoxLayout(central_widget)
-        central_layout.addWidget(background_label)
+        # Fondo
+        self.background_label = QLabel(self)
+        pixmap = QPixmap("imagenes/Editar_combo.png")
+        self.background_label.setPixmap(pixmap)
+        self.background_label.setScaledContents(True)
+        layout.addWidget(self.background_label)
+
+        # ComboBox para seleccionar el combo
+        self.combo_selector = QComboBox(self)
+        self.combo_selector.setPlaceholderText("Seleccionar combo")
+        self.combo_selector.currentIndexChanged.connect(self.cargar_datos_combo)
+        self.combo_selector.setGeometry(30, 120, 321, 38)
+        self.combo_selector.setStyleSheet(self.estilo_combo_box())
+
+        # Campos de edición
+        self.nombre_input = QLineEdit(self)
+        self.nombre_input.setPlaceholderText("Nombre del combo")
+        self.nombre_input.setGeometry(30, 180, 321, 38)
+        self.nombre_input.setStyleSheet(self.estilo_line_edit())
         
-        #boton
+        self.producto1_combo = QComboBox(self)
+        self.producto1_combo.setGeometry(30, 240, 321, 38)
+        self.producto1_combo.setStyleSheet(self.estilo_combo_box())
+        
+        self.producto2_combo = QComboBox(self)
+        self.producto2_combo.setGeometry(30, 300, 321, 38)
+        self.producto2_combo.setStyleSheet(self.estilo_combo_box())
+        
+        self.precio_input = QLineEdit(self)
+        self.precio_input.setPlaceholderText("Precio")
+        self.precio_input.setGeometry(30, 360, 321, 38)
+        self.precio_input.setStyleSheet(self.estilo_line_edit())
+
+        # Botones
         button_configs = [
-            ["Regresar", 1270, 655, 77, 70],
-            ["Confirmar", 798, 554, 227, 78],
+            ["Guardar", 73, 420, 100, 60],
+            ["Cancelar", 227, 420, 100, 60],
         ]
+        
         self.buttons = []
         for name, x, y, width, height in button_configs:
             button = QPushButton(name, self)
             button.setFixedSize(width, height)
             button.move(x, y)
-            button.setStyleSheet("""
-                QPushButton {
-                    background-color: rgba(255, 255, 255, 0);
-                    border: 0px solid white;
-                    border-radius: 10px;
-                    color: transparent;
+            button.setStyleSheet(self.estilo_boton())
+            button.clicked.connect(self.button_clicked)
+            self.buttons.append(button)
+
+        # Cargar datos
+        self.cargar_combos()
+        self.cargar_productos()
+
+    def estilo_line_edit(self):
+        return """
+            QLineEdit {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                font-size: 14px;
+                background-color: #111A2D;
+                color: #E6AA68;
+            }
+        """
+
+    def estilo_combo_box(self):
+        return """
+            QComboBox {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                font-size: 14px;
+                background-color: #111A2D;
+                color: #E6AA68;
+            }
+            QComboBox::drop-down { border: none; }
+            QComboBox::down-arrow { image: none; }
+            QComboBox QAbstractItemView {
+                background-color: #111A2D;
+                color: #E6AA68;
+                selection-background-color: #E6AA68;
+                selection-color: #111A2D;
+            }
+        """
+
+    def estilo_boton(self):
+        return """
+            QPushButton {
+                background-color: rgba(255, 255, 255, 0);
+                border: 0px solid white;
+                border-radius: 10px;
+                color: transparent;
             }
             QPushButton:hover {
                 background-color: rgba(255, 255, 255, 0);
@@ -429,16 +498,10 @@ class Editarcombo(QMainWindow):
             QPushButton:pressed {
                 background-color: rgba(230, 170, 104, 80);
             }
-        """)
-            self.buttons.append(button)
-        for button in self.buttons:
-            button.clicked.connect(self.button_clicked)
-    def button_clicked(self):
-        button = self.sender()
-        if button.text() == "Regresar":
-            self.main_window = MainCombo()  
-            self.main_window.show()
-            self.close() 
+        """
+
+    # ... Agregar los métodos cargar_combos, cargar_productos, cargar_datos_combo, 
+    # guardar_cambios y validar_datos como se mostraron en el código anterior ...
 ################################################################################################################
 class Listacombo(QMainWindow):
     def __init__(self):
