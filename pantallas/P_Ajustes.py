@@ -1,5 +1,6 @@
 import sys
 import p_inicio
+import conexion
 from PyQt6.QtCore import Qt, QPropertyAnimation
 import p_inicio, Caja, P_Registros, main_p, personal, login, p_inventario
 from PyQt6.QtGui import QPixmap
@@ -10,6 +11,8 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout,
 import subprocess
 import os
 from datetime import datetime
+
+
 
 class MainAjustes(QMainWindow):
     def __init__(self):
@@ -293,11 +296,14 @@ class MainAjustes(QMainWindow):
 
     def exportar_base_datos(self):
         try:
-            # Configuración de la base de datos
-            DB_NAME = "tienda"
-            DB_USER = "root"
-            DB_PASS = "894388"
-            DB_HOST = "localhost"
+            from conexion import obtener_credenciales_db
+            
+            # Obtener credenciales directamente del módulo de conexión
+            credenciales = obtener_credenciales_db()
+            DB_NAME = credenciales['database']
+            DB_USER = credenciales['user']
+            DB_PASS = credenciales['passwd']
+            DB_HOST = credenciales['host']
 
             # Crear nombre de archivo con fecha
             fecha_actual = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -318,7 +324,6 @@ class MainAjustes(QMainWindow):
                     comando += f' -p{DB_PASS}'
                 comando += f' {DB_NAME} > "{ruta_guardar}"'
 
-                # Ejecutar el comando
                 proceso = subprocess.run(
                     comando,
                     shell=True,
@@ -344,11 +349,14 @@ class MainAjustes(QMainWindow):
 
     def importar_base_datos(self):
         try:
-            # Configuración de la base de datos
-            DB_NAME = "tienda"
-            DB_USER = "root"
-            DB_PASS = "894388"
-            DB_HOST = "localhost"
+            from conexion import obtener_credenciales_db
+            
+            # Obtener credenciales directamente del módulo de conexión
+            credenciales = obtener_credenciales_db()
+            DB_NAME = credenciales['database']
+            DB_USER = credenciales['user']
+            DB_PASS = credenciales['passwd']
+            DB_HOST = credenciales['host']
 
             # Abrir diálogo para seleccionar archivo
             ruta_archivo = QFileDialog.getOpenFileName(
@@ -359,17 +367,12 @@ class MainAjustes(QMainWindow):
             )[0]
 
             if ruta_archivo:
-                # Verificar que el archivo existe
-                if not os.path.exists(ruta_archivo):
-                    raise Exception("El archivo seleccionado no existe")
-
                 # Comando para restaurar la base de datos
                 comando = f'mysql -h {DB_HOST} -u {DB_USER}'
                 if DB_PASS:
                     comando += f' -p{DB_PASS}'
                 comando += f' {DB_NAME} < "{ruta_archivo}"'
 
-                # Ejecutar el comando
                 proceso = subprocess.run(
                     comando,
                     shell=True,

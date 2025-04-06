@@ -658,7 +658,7 @@ class EditarProducto(QMainWindow):
                     
                     self.inputs[0].setText(str(producto[1]))     # Nombre
                     self.inputs[1].setText(str(producto[2]))     # Precio
-                    self.inputs[2].setText(str(producto[3]))     # Stock/Cantidad
+                    self.inputs[2].setText(str(producto[4]))     # Stock/Cantidad
                     
                     # Seleccionar la categoría correcta
                     categoria = str(producto[4])

@@ -5,13 +5,23 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 
 
+def obtener_credenciales_db():
+    return {
+        'host': "localhost",
+        'user': "root",
+        'passwd': "894388",
+        'database': "tienda"
+    }
+
+
 def conectar_db():
     try:
-        conexion =mysql.connector.connect(
-            host= "localhost",
-            user = "root",
-            passwd="894388",
-            database="tienda"
+        credenciales = obtener_credenciales_db()
+        conexion = mysql.connector.connect(
+            host=credenciales['host'],
+            user=credenciales['user'],
+            passwd=credenciales['passwd'],
+            database=credenciales['database']
         )
         return conexion
     except mysql.connector.Error as e:
