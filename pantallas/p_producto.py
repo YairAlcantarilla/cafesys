@@ -77,7 +77,7 @@ class MainWindow(QMainWindow):
             ["Agregar Producto", 875, 144, 343, 55],
             ["Eliminar", 875, 225, 343, 55],
             ["Editar", 875, 306, 343, 55],
-            ["Recargar", 875, 387, 343, 55],  # Nuevo botón de recarga
+            ["Recargar", 875, 387, 343, 55], 
             ["Regresar", 1270, 655, 77, 70],
         ]
 

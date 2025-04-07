@@ -9,7 +9,7 @@ def obtener_credenciales_db():
     return {
         'host': "localhost",
         'user': "root",
-        'passwd': "894388",
+        'passwd': "1234",
         'database': "tienda"
     }
 
