@@ -354,24 +354,32 @@ def agregar_combo(nombre, producto1, producto2, precio):
 
 def mostrar_combos():
     try:
-        
         conexion = conectar_db()
+        if not conexion:
+            raise Exception("No se pudo establecer conexión con la base de datos")
+            
         cursor = conexion.cursor()
-
+        
         consulta = """
         SELECT c.Nombre, p1.Nombre AS Producto1, p2.Nombre AS Producto2, c.Precio
         FROM combos c
         JOIN producto p1 ON c.Producto1_ID = p1.ID_producto
         JOIN producto p2 ON c.Producto2_ID = p2.ID_producto
+        ORDER BY c.Nombre
         """
+        
         cursor.execute(consulta)
         combos = cursor.fetchall()
-
+        
+        # Debug para verificar los datos
+        print("Datos obtenidos de la base de datos:", combos)
+        
+        cursor.close()
         conexion.close()
         return combos
-
-    except mysql.connector.Error as e:
-        print(f"Error al obtener los combos: {e}")
+        
+    except Exception as e:
+        print(f"Error en mostrar_combos: {e}")
         return []
 
 
@@ -381,12 +389,10 @@ from mysql.connector import Error  # Asegúrate de importar Error correctamente
 def eliminar_combo(nombre_combo):
     try:
         conexion = conectar_db()
-        cursor= conexion.cursor()
+        cursor = conexion.cursor()
         if conexion.is_connected():
-            cursor = conexion.cursor()
-
             # Verifica si el combo existe antes de intentar eliminarlo
-            check_query = "SELECT COUNT(*) FROM combos WHERE nombre_combo = %s"
+            check_query = "SELECT COUNT(*) FROM combos WHERE Nombre = %s"
             cursor.execute(check_query, (nombre_combo,))
             result = cursor.fetchone()
             if result[0] == 0:
@@ -394,7 +400,7 @@ def eliminar_combo(nombre_combo):
                 return
 
             # SQL para eliminar el combo
-            query = "DELETE FROM combos WHERE nombre_combo = %s"
+            query = "DELETE FROM combos WHERE Nombre = %s"
             cursor.execute(query, (nombre_combo,))
             
             # Confirmamos que la operación fue exitosa
@@ -410,10 +416,10 @@ def eliminar_combo(nombre_combo):
         print(f"Error al eliminar combo: {e}")
         raise Exception(f"Error al eliminar combo: {e}")
     finally:
-        # Cerramos la conexión
-        if conexion.is_connected():
+        if conexion and conexion.is_connected():
             cursor.close()
             conexion.close()
+
 def obtener_precio_producto(nombre_producto):
     try:
         connection = conectar_db()
@@ -560,13 +566,17 @@ def cargar_datos_combo(nombre_combo):
         conexion = conectar_db()
         cursor = conexion.cursor()
 
-        cursor.execute("""
-            SELECT nombre, producto1, producto2, precio 
-            FROM combos 
-            WHERE nombre = %s
-        """, (nombre_combo,))
+        consulta = """
+            SELECT c.Nombre, p1.Nombre AS Producto1, p2.Nombre AS Producto2, c.Precio
+            FROM combos c
+            JOIN producto p1 ON c.Producto1_ID = p1.ID_producto
+            JOIN producto p2 ON c.Producto2_ID = p2.ID_producto
+            WHERE c.Nombre = %s
+        """
         
+        cursor.execute(consulta, (nombre_combo,))
         combo = cursor.fetchone()
+        cursor.close()
         conexion.close()
         
         return combo
@@ -619,3 +629,44 @@ def eliminar_descuento(nombre_descuento):
     except Exception as e:
         print(f"Error al eliminar descuento: {e}")
         raise
+
+def actualizar_combo(nombre_original, datos):
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        
+        # Obtener los IDs de los productos
+        cursor.execute("SELECT ID_producto FROM producto WHERE Nombre = %s", (datos['producto1'],))
+        id_producto1 = cursor.fetchone()
+        
+        cursor.execute("SELECT ID_producto FROM producto WHERE Nombre = %s", (datos['producto2'],))
+        id_producto2 = cursor.fetchone()
+        
+        if not id_producto1 or not id_producto2:
+            raise Exception("Uno o ambos productos no existen")
+        
+        # Actualizar el combo
+        sql = """
+            UPDATE combos 
+            SET Nombre = %s, 
+                Producto1_ID = %s, 
+                Producto2_ID = %s, 
+                Precio = %s 
+            WHERE Nombre = %s
+        """
+        valores = (
+            datos['nombre'],
+            id_producto1[0],
+            id_producto2[0],
+            datos['precio'],
+            nombre_original
+        )
+        
+        cursor.execute(sql, valores)
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+        
+    except Exception as e:
+        print(f"Error al actualizar combo: {e}")
+        raise Exception(f"Error al actualizar combo: {str(e)}")

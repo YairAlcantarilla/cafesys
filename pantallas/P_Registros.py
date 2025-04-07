@@ -1,6 +1,6 @@
 import sys
 import Caja, P_Registros, personal, login, p_inventario, main_p, P_Ajustes
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QLabel, QVBoxLayout, 
@@ -8,6 +8,9 @@ from PyQt6.QtWidgets import (
     QHeaderView, QDialog, QMessageBox
 )
 from conexion import conectar_db
+from datetime import datetime
+import json
+import os
 
 class MainR(QMainWindow):
     def __init__(self):
@@ -186,6 +189,46 @@ class MainR(QMainWindow):
             }
         """)
         self.ver_ventas_button.clicked.connect(self.mostrar_ventas)
+
+        # Configurar timer para verificar la hora
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.check_time)
+        self.timer.start(60000)  # Verificar cada minuto
+        
+        # Cargar hora configurada
+        self.load_configured_time()
+
+    def load_configured_time(self):
+        try:
+            config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+            if os.path.exists(config_path):
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                    self.configured_time = config.get('scheduled_time', '23:59')
+            else:
+                self.configured_time = '23:59'  # Hora por defecto
+        except Exception as e:
+            print(f"Error cargando hora configurada: {e}")
+            self.configured_time = '23:59'
+
+    def check_time(self):
+        current_time = datetime.now().strftime('%H:%M')
+        if current_time == self.configured_time:
+            self.generar_reporte_automatico()
+
+    def generar_reporte_automatico(self):
+        try:
+            # Generar reporte automático
+            self.generar_reporte_venta()
+            
+            # Mostrar notificación
+            QMessageBox.information(
+                self,
+                "Reporte Automático",
+                f"Se ha generado un reporte automático programado para las {self.configured_time}"
+            )
+        except Exception as e:
+            print(f"Error generando reporte automático: {e}")
 
     def cargar_datos(self):
         try:

@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout,
 import subprocess
 import os
 from datetime import datetime
+import json
 
 
 
@@ -260,14 +261,18 @@ class MainAjustes(QMainWindow):
         selected_time = f"{hours}:{minutes}"
         
         try:
-            # Aquí puedes agregar la lógica para usar el tiempo seleccionado
+            # Guardar la hora configurada en un archivo JSON
+            config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+            config = {'scheduled_time': selected_time}
+            
+            with open(config_path, 'w') as f:
+                json.dump(config, f)
+            
             QMessageBox.information(
                 self,
                 "Hora Configurada",
-                f"Hora establecida: {selected_time}"
+                f"Hora establecida: {selected_time}\nLos reportes se generarán automáticamente a esta hora."
             )
-            # Guardar el tiempo seleccionado como atributo de la clase
-            self.configured_time = selected_time
             
         except Exception as e:
             QMessageBox.critical(

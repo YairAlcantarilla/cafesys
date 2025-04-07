@@ -65,6 +65,8 @@ class MainCombo(QMainWindow):
 
         self.cargar_datos()
 
+        self.last_window = None
+
         button_configs = [
             ["Agregar Combo", 875, 144, 343, 55],
             ["Eliminar", 875, 225, 343, 55],
@@ -98,33 +100,54 @@ class MainCombo(QMainWindow):
         try:
             from conexion import mostrar_combos
             combos = mostrar_combos()
-        
+            
+            # Debug para ver qué datos estamos recibiendo
+            print("Datos recibidos de mostrar_combos:", combos)
+            
+            if not combos:
+                self.table_widget.setRowCount(0)
+                return
+                
             self.table_widget.setRowCount(len(combos))
         
             for fila, combo in enumerate(combos):
-                # combo[0] = Nombre del combo
-                # combo[1] = Nombre del producto 1
-                # combo[2] = Nombre del producto 2
-                # combo[3] = Precio
-                self.table_widget.setItem(fila, 0, QTableWidgetItem(str(combo[0])))  # Nombre del combo
-                self.table_widget.setItem(fila, 1, QTableWidgetItem(str(combo[1])))  # Producto 1
-                self.table_widget.setItem(fila, 2, QTableWidgetItem(str(combo[2])))  # Producto 2
-                self.table_widget.setItem(fila, 3, QTableWidgetItem(f"${str(combo[3])}"))  # Precio
+                try:
+                    # Asegurarse de que cada columna tenga datos válidos
+                    nombre = str(combo[0]) if combo[0] is not None else ""
+                    producto1 = str(combo[1]) if combo[1] is not None else ""
+                    producto2 = str(combo[2]) if combo[2] is not None else ""
+                    precio = f"${str(combo[3])}" if combo[3] is not None else "$0.00"
+                    
+                    self.table_widget.setItem(fila, 0, QTableWidgetItem(nombre))
+                    self.table_widget.setItem(fila, 1, QTableWidgetItem(producto1))
+                    self.table_widget.setItem(fila, 2, QTableWidgetItem(producto2))
+                    self.table_widget.setItem(fila, 3, QTableWidgetItem(precio))
+                except IndexError as e:
+                    print(f"Error en el índice del combo {fila}: {e}")
+                    print(f"Datos del combo: {combo}")
+                    
         except Exception as e:
+            print(f"Error detallado al cargar los combos: {str(e)}")
             QMessageBox.critical(self, "Error", f"Error al cargar los combos: {str(e)}")
 
+    def actualizar_tabla(self):
+        """Actualiza los datos de la tabla"""
+        self.cargar_datos()
 
     def button_clicked(self):
         button = self.sender()
         if button.text() == "Agregar Combo":
-            self.main_window = AgregarCombo()
-            self.main_window.show()
+            self.last_window = AgregarCombo()
+            self.last_window.combo_agregado.connect(self.actualizar_tabla)
+            self.last_window.show()
         elif button.text() == "Eliminar":
-            self.dialog = EliminarCombo()
-            self.dialog.show()
+            self.last_window = EliminarCombo()
+            self.last_window.combo_eliminado.connect(self.actualizar_tabla)
+            self.last_window.show()
         elif button.text() == "Editar":
-            self.dialog = EditarCombo()
-            self.dialog.show()
+            self.last_window = EditarCombo()
+            self.last_window.combo_editado.connect(self.actualizar_tabla)
+            self.last_window.show()
         elif button.text() == "Regresar":
             self.main_window = main_p.MainPWindow()  
             self.main_window.show()
@@ -133,6 +156,8 @@ class MainCombo(QMainWindow):
 
 ##########################################################################################
 class AgregarCombo(QMainWindow):
+    combo_agregado = pyqtSignal()
+
     def __init__(self):
         super().__init__()
 
@@ -275,6 +300,7 @@ class AgregarCombo(QMainWindow):
             from conexion import agregar_combo
             agregar_combo(nombre_combo, producto1, producto2, precio_combo)
             QMessageBox.information(self, "Éxito", "Combo agregado correctamente.")
+            self.combo_agregado.emit()
             self.close()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al agregar combo: {str(e)}")
@@ -283,6 +309,8 @@ class AgregarCombo(QMainWindow):
 ###########################################################################################
 
 class EliminarCombo(QMainWindow):
+    combo_eliminado = pyqtSignal()
+
     def __init__(self):
         super().__init__()
 
@@ -370,17 +398,9 @@ class EliminarCombo(QMainWindow):
             if combo_seleccionado != "Seleccionar combo":
                 try:
                     eliminar_combo(combo_seleccionado)
-                    
-                    # Actualizar la ventana principal con los cambios
-                    for widget in QApplication.topLevelWidgets():
-                        if isinstance(widget, MainCombo):
-                            widget.cargar_datos()
-                            break
-                    
                     QMessageBox.information(self, "Éxito", "Combo eliminado correctamente")
-                    # Reset combo y recargar los combos
-                    self.combo_combo.clear()
-                    self.cargar_combos()
+                    self.combo_eliminado.emit()
+                    self.close()
                 except Exception as e:
                     QMessageBox.critical(self, "Error", f"No se pudo eliminar el combo:\n{str(e)}")
             else:
@@ -500,8 +520,97 @@ class EditarCombo(QMainWindow):
             }
         """
 
-    # ... Agregar los métodos cargar_combos, cargar_productos, cargar_datos_combo, 
-    # guardar_cambios y validar_datos como se mostraron en el código anterior ...
+    def cargar_combos(self):
+        """Carga la lista de combos en el ComboBox."""
+        try:
+            from conexion import mostrar_combos
+            combos = mostrar_combos()
+            self.combo_selector.addItem("Seleccionar combo")
+            for combo in combos:
+                self.combo_selector.addItem(combo[0])
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar combos: {str(e)}")
+
+    def cargar_productos(self):
+        """Carga la lista de productos en los ComboBoxes."""
+        try:
+            from conexion import mostrar_productos
+            productos = mostrar_productos()
+            for producto in productos:
+                self.producto1_combo.addItem(producto[1])
+                self.producto2_combo.addItem(producto[1])
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar productos: {str(e)}")
+
+    def cargar_datos_combo(self):
+        """Carga los datos del combo seleccionado."""
+        nombre_combo = self.combo_selector.currentText()
+        if nombre_combo == "Seleccionar combo":
+            return
+        
+        try:
+            from conexion import cargar_datos_combo
+            combo = cargar_datos_combo(nombre_combo)
+            if combo:
+                self.nombre_input.setText(combo[0])
+                index1 = self.producto1_combo.findText(combo[1])
+                index2 = self.producto2_combo.findText(combo[2])
+                self.producto1_combo.setCurrentIndex(index1 if index1 >= 0 else 0)
+                self.producto2_combo.setCurrentIndex(index2 if index2 >= 0 else 0)
+                self.precio_input.setText(str(combo[3]))
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar datos del combo: {str(e)}")
+
+    def button_clicked(self):
+        """Maneja los eventos de los botones."""
+        button = self.sender()
+        if button.text() == "Cancelar":
+            self.close()
+        elif button.text() == "Guardar":
+            self.guardar_cambios()
+
+    def guardar_cambios(self):
+        """Guarda los cambios realizados en el combo."""
+        if not self.validar_datos():
+            return
+        
+        nombre_combo = self.combo_selector.currentText()
+        if nombre_combo == "Seleccionar combo":
+            QMessageBox.warning(self, "Advertencia", "Por favor seleccione un combo para editar")
+            return
+        
+        try:
+            datos = {
+                "nombre": self.nombre_input.text(),
+                "producto1": self.producto1_combo.currentText(),
+                "producto2": self.producto2_combo.currentText(),
+                "precio": float(self.precio_input.text())
+            }
+            
+            if datos["producto1"] == datos["producto2"]:
+                QMessageBox.warning(self, "Advertencia", "Los productos deben ser diferentes")
+                return
+                
+            from conexion import actualizar_combo
+            actualizar_combo(nombre_combo, datos)
+            QMessageBox.information(self, "Éxito", "Combo actualizado correctamente")
+            self.combo_editado.emit()
+            self.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo actualizar el combo: {str(e)}")
+
+    def validar_datos(self):
+        """Valida que los datos ingresados sean correctos."""
+        if not self.nombre_input.text() or not self.precio_input.text():
+            QMessageBox.warning(self, "Advertencia", "Por favor, complete todos los campos")
+            return False
+        try:
+            float(self.precio_input.text())
+            return True
+        except ValueError:
+            QMessageBox.warning(self, "Advertencia", "El precio debe ser un número válido")
+            return False
+
 ################################################################################################################
 class Listacombo(QMainWindow):
     def __init__(self):
