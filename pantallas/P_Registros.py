@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QHeaderView, QDialog, QMessageBox
 )
 from conexion import conectar_db
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os
 
@@ -195,7 +195,9 @@ class MainR(QMainWindow):
         self.timer.timeout.connect(self.check_time)
         self.timer.start(60000)  # Verificar cada minuto
         
-        # Cargar hora configurada
+        # Añadir estas variables para controlar el tiempo
+        self.ultimo_reporte = None
+        self.intervalo_minimo = None
         self.load_configured_time()
 
     def load_configured_time(self):
@@ -205,11 +207,26 @@ class MainR(QMainWindow):
                 with open(config_path, 'r') as f:
                     config = json.load(f)
                     self.configured_time = config.get('scheduled_time', '23:59')
+                    # Calcular el intervalo hasta la próxima hora programada
+                    self.actualizar_intervalo()
             else:
-                self.configured_time = '23:59'  # Hora por defecto
+                self.configured_time = '23:59'
+                self.intervalo_minimo = timedelta(hours=24)
         except Exception as e:
             print(f"Error cargando hora configurada: {e}")
             self.configured_time = '23:59'
+            self.intervalo_minimo = timedelta(hours=24)
+
+    def actualizar_intervalo(self):
+        """Calcula el tiempo hasta la próxima hora programada"""
+        now = datetime.now()
+        scheduled_hour, scheduled_minute = map(int, self.configured_time.split(':'))
+        next_run = now.replace(hour=scheduled_hour, minute=scheduled_minute)
+        
+        if next_run <= now:
+            next_run += timedelta(days=1)
+        
+        self.intervalo_minimo = next_run - now
 
     def check_time(self):
         current_time = datetime.now().strftime('%H:%M')
@@ -220,6 +237,10 @@ class MainR(QMainWindow):
         try:
             # Generar reporte automático
             self.generar_reporte_venta()
+            
+            # Actualizar el tiempo del último reporte
+            self.ultimo_reporte = datetime.now()
+            self.actualizar_intervalo()
             
             # Mostrar notificación
             QMessageBox.information(
@@ -263,12 +284,34 @@ class MainR(QMainWindow):
 
     def generar_reporte_venta(self):
         try:
+            # Verificar si ha pasado suficiente tiempo desde el último reporte
+            if self.ultimo_reporte is not None:
+                tiempo_transcurrido = datetime.now() - self.ultimo_reporte
+                tiempo_restante = self.intervalo_minimo - tiempo_transcurrido
+                
+                if tiempo_transcurrido < self.intervalo_minimo:
+                    horas = int(tiempo_restante.total_seconds() // 3600)
+                    minutos = int((tiempo_restante.total_seconds() % 3600) // 60)
+                    QMessageBox.warning(
+                        self,
+                        "Espera Requerida",
+                        f"Debe esperar {horas} horas y {minutos} minutos para generar otro reporte manual.\n"
+                        f"Próximo reporte programado: {self.configured_time}"
+                    )
+                    return
+
             conexion = conectar_db()
             cursor = conexion.cursor()
             
             # Obtener la fecha más reciente
             cursor.execute("SELECT DISTINCT fecha FROM ventas ORDER BY fecha DESC LIMIT 1")
-            fecha_reporte = cursor.fetchone()[0]
+            resultado = cursor.fetchone()
+            
+            if not resultado:
+                QMessageBox.warning(self, "Aviso", "No hay ventas registradas para generar el reporte")
+                return
+                
+            fecha_reporte = resultado[0]
             
             # Obtener todas las ventas del día
             cursor.execute("""
@@ -279,7 +322,12 @@ class MainR(QMainWindow):
             ventas = cursor.fetchall()
             
             if not ventas:
-                raise Exception(f"No hay ventas registradas para la fecha {fecha_reporte}")
+                QMessageBox.warning(
+                    self,
+                    "Aviso",
+                    f"No hay ventas registradas para la fecha {fecha_reporte}"
+                )
+                return
             
             # Procesar datos para el reporte
             total_ventas = sum(venta[1] for venta in ventas)  # Suma de cantidades
@@ -304,12 +352,25 @@ class MainR(QMainWindow):
             cursor.close()
             conexion.close()
             
+            # Actualizar el tiempo del último reporte
+            self.ultimo_reporte = datetime.now()
+            self.actualizar_intervalo()
+            
             # Recargar la tabla
             self.cargar_datos()
             
+            QMessageBox.information(
+                self,
+                "Éxito",
+                "Reporte generado correctamente"
+            )
+            
         except Exception as e:
-            from PyQt6.QtWidgets import QMessageBox
-            QMessageBox.critical(self, "Error", f"Error al generar reporte: {str(e)}")
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Error al generar reporte: {str(e)}"
+            )
 
     def mostrar_ventas(self):
         ventas_window = VentasWindow(self)

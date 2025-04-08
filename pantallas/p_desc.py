@@ -2,11 +2,11 @@ import sys
 import p_inicio
 import main_p
 import conexion
-from conexion import mostrar_productos, obtener_precio_producto, agregar_descuento, obtener_descuentos
-from PyQt6.QtCore import Qt
+from conexion import mostrar_productos, obtener_precio_producto, agregar_descuento, obtener_descuentos, mostrar_descuentos, conectar_db
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QLineEdit
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QComboBox, QMessageBox, QTableWidget, QTableWidgetItem, QHBoxLayout, QHeaderView
 #####################################################
 class MainDesc(QMainWindow):
     def __init__(self):
@@ -25,12 +25,49 @@ class MainDesc(QMainWindow):
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
         central_layout.addWidget(background_label)
+
+        # Crear la tabla de descuentos
+        self.table_widget = QTableWidget(self)
+        self.table_widget.setGeometry(160, 145, 650, 555)  # x, y, width, height
+        self.table_widget.setColumnCount(4)
+        self.table_widget.setHorizontalHeaderLabels([
+            "ID Descuento", "Producto", "Descuento (%)", "Precio Final"
+        ])
+
+        # Estilo de la tabla
+        self.table_widget.setStyleSheet("""
+            QTableWidget {
+                background-color: #111A2D;
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                color: #E6AA68;
+                gridline-color: #E6AA68;
+            }
+            QHeaderView::section {
+                background-color: #111A2D;
+                color: #E6AA68;
+                border: 1px solid #E6AA68;
+                padding: 5px;
+            }
+            QTableWidget::item {
+                border: 1px solid #E6AA68;
+                padding: 5px;
+            }
+        """)
+
+        # Ajustar el ancho de las columnas
+        header = self.table_widget.horizontalHeader()
+        for i in range(4):
+            header.setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
+
+        # Cargar datos
+        self.cargar_datos()
+
         #boton
         button_configs = [
-            ["AgregarD", 273, 144, 343, 55],
-            ["EliminarD", 273, 225, 343, 55],
-            ["EditarD", 273, 306, 343, 55],
-            ["ListaD", 273, 387, 343, 55],
+            ["AgregarD", 873, 144, 343, 55],
+            ["EliminarD", 873, 225, 343, 55],
+            ["EditarD", 873, 306, 343, 55],
             ["Regresar", 1270, 655, 77, 70],
         ]
 
@@ -58,89 +95,141 @@ class MainDesc(QMainWindow):
         for button in self.buttons:
                 button.clicked.connect(self.button_clicked)
 
+    def cargar_datos(self):
+        try:
+            # Usar obtener_descuentos en lugar de consulta directa
+            descuentos = obtener_descuentos()
+            
+            self.table_widget.setRowCount(len(descuentos))
+            
+            for fila, descuento in enumerate(descuentos):
+                # Obtener el nombre del producto
+                conexion = conectar_db()
+                cursor = conexion.cursor()
+                cursor.execute("SELECT Nombre FROM producto WHERE ID_producto = %s", (descuento[2],))
+                nombre_producto = cursor.fetchone()[0]
+                cursor.close()
+                conexion.close()
+
+                # ID Descuento
+                self.table_widget.setItem(fila, 0, QTableWidgetItem(str(descuento[0])))
+                # Nombre Producto
+                self.table_widget.setItem(fila, 1, QTableWidgetItem(nombre_producto))
+                # Porcentaje
+                self.table_widget.setItem(fila, 2, QTableWidgetItem(f"{descuento[1]}%"))
+                # Precio Final
+                self.table_widget.setItem(fila, 3, QTableWidgetItem(f"${descuento[3]:.2f}"))
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar los descuentos: {str(e)}")
+
     def button_clicked(self):
         button = self.sender()
         if button.text() == "Regresar":
-            self.main_window = main_p.MainPWindow()
+            from main_p import MainPWindow  # Importar aquí para evitar importación circular
+            self.main_window = MainPWindow()
             self.main_window.show()
             self.close()
         elif button.text() == "AgregarD":
-            self.main_window = AgregarDto()
-            self.main_window.show()
-            self.close()
-        elif button.text() == "EditarD":
-            self.main_window = EditarDto()
-            self.main_window.show()
-            self.close()
-        elif button.text() == "ListaD":
-            self.main_window = ListaDto()
-            self.main_window.show()
-            self.close()
+            self.ventana_agregar = AgregarDto(self)
+            self.ventana_agregar.descuento_agregado.connect(self.cargar_datos)
+            self.ventana_agregar.show()
         elif button.text() == "EliminarD":
-            self.main_window = EliminarDescuento()
-            self.main_window.show()
-            self.close()
+            self.ventana_eliminar = EliminarDescuento(self)
+            self.ventana_eliminar.descuento_eliminado.connect(self.cargar_datos)
+            self.ventana_eliminar.show()
+        elif button.text() == "EditarD":
+            self.ventana_editar = EditarDto(self)
+            self.ventana_editar.descuento_editado.connect(self.cargar_datos)
+            self.ventana_editar.show()
+        elif button.text() == "ListaD":
+            self.ventana_lista = ListaDto(self)
+            self.ventana_lista.show()
 #################################################
 
 class AgregarDto(QMainWindow):
-    def __init__(self):
-        super().__init__()
-
+    descuento_agregado = pyqtSignal()  # Nueva señal
+    
+    def __init__(self, parent=None):  # Añadir parent
+        super().__init__(parent)
+        
         self.setWindowTitle("Agregar Descuento")
-        self.setFixedSize(1366, 768)
-
-        central_widget = QWidget(self)
+        self.setFixedSize(400, 400)
+        self.setStyleSheet("background-color: #000928;")
+        
+        # Layout principal
+        central_widget = QWidget()
         self.setCentralWidget(central_widget)
-
-        # Fondo agregar
-        background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/agregar dto.png')
-        background_label.setPixmap(pixmap)
-        background_label.setScaledContents(True)
-        central_layout = QVBoxLayout(central_widget)
-        central_layout.addWidget(background_label)
-
-        # ComboBox para seleccionar producto
-        self.producto = QComboBox(self)
-        self.producto.setFixedSize(240, 40)
-        self.producto.move(588, 194)
+        layout = QVBoxLayout(central_widget)
+        
+        # Elementos de la interfaz
+        producto_label = QLabel("Producto:")
+        producto_label.setStyleSheet("color: #E6AA68; font-size: 16px;")
+        self.producto = QComboBox()
+        self.producto.setFixedSize(200, 30)
         self.producto.setStyleSheet(self.estilo_combo_box())
-        self.producto.currentIndexChanged.connect(self.mostrar_precio)
-
-        self.cargar_productos()
-
-        # Campos de entrada (precio, descuento, precio final)
-        self.precio = QLineEdit(self)
-        self.precio.setFixedSize(240, 40)
-        self.precio.move(588, 281)
-        self.precio.setReadOnly(True)  # Solo lectura
+        
+        precio_label = QLabel("Precio:")
+        precio_label.setStyleSheet("color: #E6AA68; font-size: 16px;")
+        self.precio = QLineEdit()
+        self.precio.setReadOnly(True)
         self.precio.setStyleSheet(self.estilo_input())
-
-        self.descuento = QLineEdit(self)
-        self.descuento.setFixedSize(240, 40)
-        self.descuento.move(952, 194)
-        self.descuento.setPlaceholderText("Porcentaje %")
+        
+        descuento_label = QLabel("Descuento (%):")
+        descuento_label.setStyleSheet("color: #E6AA68; font-size: 16px;")
+        self.descuento = QLineEdit()
         self.descuento.setStyleSheet(self.estilo_input())
-        self.descuento.textChanged.connect(self.calcular_precio_final)
-
-        self.precio_final = QLineEdit(self)
-        self.precio_final.setFixedSize(240, 40)
-        self.precio_final.move(952, 281)
-        self.precio_final.setReadOnly(True)  # Solo lectura
+        
+        precio_final_label = QLabel("Precio Final:")
+        precio_final_label.setStyleSheet("color: #E6AA68; font-size: 16px;")
+        self.precio_final = QLineEdit()
+        self.precio_final.setReadOnly(True)
         self.precio_final.setStyleSheet(self.estilo_input())
-
+        
         # Botones
-        self.boton_confirmar = QPushButton("Confirmar", self)
-        self.boton_confirmar.setFixedSize(227, 78)
-        self.boton_confirmar.move(798, 554)
-        self.boton_confirmar.setStyleSheet(self.estilo_boton())
-        self.boton_confirmar.clicked.connect(self.guardar_descuento)
-
-        self.boton_regresar = QPushButton("Regresar", self)
-        self.boton_regresar.setFixedSize(77, 70)
-        self.boton_regresar.move(1270, 655)
-        self.boton_regresar.setStyleSheet(self.estilo_boton())
-        self.boton_regresar.clicked.connect(self.cerrar_ventana)
+        button_layout = QHBoxLayout()  # Cambiar a QHBoxLayout
+        self.btn_cancelar = QPushButton("Cancelar")
+        self.btn_confirmar = QPushButton("Confirmar")
+        
+        # Añadir espaciado entre los botones
+        button_layout.addStretch()  # Espacio flexible al inicio
+        
+        for btn in [self.btn_cancelar, self.btn_confirmar]:
+            btn.setFixedSize(100, 30)
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #E6AA68;
+                    border-radius: 10px;
+                    color: #111A2D;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #D69958;
+                }
+            """)
+            button_layout.addWidget(btn)
+            button_layout.addSpacing(10)  # Espacio entre botones
+            
+        button_layout.addStretch()  # Espacio flexible al final
+        
+        # Añadir widgets al layout
+        layout.addWidget(producto_label)
+        layout.addWidget(self.producto)
+        layout.addWidget(precio_label)
+        layout.addWidget(self.precio)
+        layout.addWidget(descuento_label)
+        layout.addWidget(self.descuento)
+        layout.addWidget(precio_final_label)
+        layout.addWidget(self.precio_final)
+        layout.addLayout(button_layout)
+        
+        # Conexiones
+        self.producto.currentIndexChanged.connect(self.mostrar_precio)
+        self.descuento.textChanged.connect(self.calcular_precio_final)
+        self.btn_cancelar.clicked.connect(self.close)
+        self.btn_confirmar.clicked.connect(self.guardar_descuento)
+        
+        self.cargar_productos()
 
     def estilo_combo_box(self):
         return """
@@ -174,22 +263,6 @@ class AgregarDto(QMainWindow):
             }
         """
 
-    def estilo_boton(self):
-        return """
-            QPushButton {
-                background-color: rgba(255, 255, 255, 0);
-                border: 0px solid white;
-                border-radius: 10px;
-                color: transparent;
-            }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0);
-            }
-            QPushButton:pressed {
-                background-color: rgba(230, 170, 104, 80);
-            }
-        """
-
     def cargar_productos(self):
         """Carga la lista de productos en el QComboBox."""
         try:
@@ -210,9 +283,6 @@ class AgregarDto(QMainWindow):
                 self.calcular_precio_final()
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Error al obtener precio: {str(e)}")
-        #else:
-            #self.precio.setText("")
-            #self.precio_final.setText("")
 
     def calcular_precio_final(self):
         """Calcula el precio final después del descuento."""
@@ -241,25 +311,19 @@ class AgregarDto(QMainWindow):
 
             agregar_descuento(nombre_producto, descuento, precio_final)
             QMessageBox.information(self, "Éxito", "Descuento agregado correctamente.")
+            self.descuento_agregado.emit()  # Emitir señal
             self.close()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo guardar el descuento: {str(e)}")
 
-    def cerrar_ventana(self):
-        """Cierra la ventana y regresa al menú anterior."""
-        self.main_window = MainDesc()
-        self.main_window.show()
-        self.close()
-
-
 ######################################################################################################
-from conexion import mostrar_descuentos, eliminar_descuento  # Asegúrate de tener estas funciones en tu módulo
+from conexion import mostrar_descuentos, ocultar_descuento  # Asegúrate de tener estas funciones en tu módulo
 
 class EliminarDescuento(QMainWindow):
-   # descuento_eliminado = pyqtSignal()  # Señal para notificar eliminación
+    descuento_eliminado = pyqtSignal()
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):  # Añadir parent
+        super().__init__(parent)
 
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
@@ -334,12 +398,13 @@ class EliminarDescuento(QMainWindow):
             button.clicked.connect(self.button_clicked)
 
     def cargar_descuentos(self):
+        self.descuento_combo.clear()
         self.descuento_combo.addItem("Seleccionar descuento")
 
         try:
-            descuentos = mostrar_descuentos()
+            descuentos = obtener_descuentos()  # Esta función ya filtra los descuentos ocultos
             for descuento in descuentos:
-                self.descuento_combo.addItem(str(descuento))  # Ya no se usa descuento[0]
+                self.descuento_combo.addItem(str(descuento[0]))
         except Exception as e:
             print(f"Error al cargar descuentos: {str(e)}")
 
@@ -350,109 +415,199 @@ class EliminarDescuento(QMainWindow):
         elif button.text() == "Eliminar":
             descuento_seleccionado = self.descuento_combo.currentText()
             if descuento_seleccionado != "Seleccionar descuento":
-                try:
-                    eliminar_descuento(descuento_seleccionado)
+                reply = QMessageBox.question(
+                    self,
+                    'Confirmación',
+                    '¿Está seguro de ocultar este descuento?\nNo estará disponible para su uso.',
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                )
+                
+                if reply == QMessageBox.StandardButton.Yes:
+                    try:
+                        conexion.ocultar_descuento(descuento_seleccionado)
 
-                    # Refrescar ventana principal si aplica
-                    for widget in QApplication.topLevelWidgets():
-                        if hasattr(widget, 'cargar_datos'):
-                            widget.cargar_datos()
-                            break
+                        # Refrescar ventana principal si aplica
+                        for widget in QApplication.topLevelWidgets():
+                            if hasattr(widget, 'cargar_datos'):
+                                widget.cargar_datos()
+                                break
 
-                    QMessageBox.information(self, "Éxito", "Descuento eliminado correctamente")
-                    self.descuento_eliminado.emit()
-                    self.descuento_combo.clear()
-                    self.cargar_descuentos()
-                except Exception as e:
-                    QMessageBox.critical(self, "Error", f"No se pudo eliminar el descuento:\n{str(e)}")
+                        QMessageBox.information(self, "Éxito", "Descuento ocultado correctamente")
+                        self.descuento_eliminado.emit()
+                        self.descuento_combo.clear()
+                        self.cargar_descuentos()
+                    except Exception as e:
+                        QMessageBox.critical(self, "Error", f"No se pudo ocultar el descuento:\n{str(e)}")
             else:
                 QMessageBox.warning(self, "Advertencia", "Por favor seleccione un descuento")
 
 ######################################################################################################
 class EditarDto(QMainWindow):
-    def __init__(self):
-        super().__init__()
+    descuento_editado = pyqtSignal()  # Añadir esta línea al inicio de la clase
 
-        self.setWindowTitle("Agregar combo")
-        self.setFixedSize(1366, 768)
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
-        central_widget = QWidget(self)
-        self.setCentralWidget(central_widget)
-
-        # fondo agregar
-        background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/EditarD.png')
-        background_label.setPixmap(pixmap)
-        background_label.setScaledContents(True)
-        central_layout = QVBoxLayout(central_widget)
-        central_layout.addWidget(background_label)
-
-
-        input_configs = [
-            [".", 588, 194, 240, 40],
-            [".", 588, 281, 240, 40],
-            [".", 952, 194, 240, 40],
-            [".", 952, 281, 240, 40],
-   
-        ]
-
-        self.inputs = []
-        for placeholder, x, y, width, height in input_configs:
-            input_field = QLineEdit(self)
-            input_field.setPlaceholderText(placeholder)  # Texto de referencia dentro del campo
-            input_field.setFixedSize(width, height)
-            input_field.move(x, y)
-            input_field.setStyleSheet("""
-                QLineEdit {
-                    border: 1px solid #E6AA68;
-                    border-radius: 10px;
-                    padding: 5px;
-                    font-size: 14px;
-                    background-color: #111A2D;
-                    color: #E6AA68;                                      
-                }
-            """)
-            self.inputs.append(input_field)
+        self.setWindowTitle("Editar Descuento")
+        self.setFixedSize(400, 400)
+        self.setStyleSheet("background-color: #000928;")
         
+        # Layout principal
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        layout = QVBoxLayout(central_widget)
 
-        button_configs = [
-            ["Regresar", 1270, 655, 77, 70],
-            ["Confirmar", 798, 554, 227, 78],
-        ]
-
-        self.buttons = []
-        for name, x, y, width, height in button_configs:
-            button = QPushButton(name, self)
-            button.setFixedSize(width, height)
-            button.move(x, y)
-            button.setStyleSheet("""
-                QPushButton {
-                    background-color: rgba(255, 255, 255, 0);
-                    border: 0px solid white;
-                    border-radius: 10px;
-                    color: transparent;
+        # ComboBox para seleccionar el descuento a editar
+        descuento_label = QLabel("Seleccionar Descuento:")
+        descuento_label.setStyleSheet("color: #E6AA68; font-size: 16px;")
+        self.descuento_combo = QComboBox()
+        self.descuento_combo.setFixedSize(200, 30)
+        self.descuento_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                font-size: 14px;
+                background-color: #111A2D;
+                color: #E6AA68;
             }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0);
-            }
-            QPushButton:pressed {
-                background-color: rgba(230, 170, 104, 80);
+            QComboBox::drop-down { border: none; }
+            QComboBox::down-arrow { image: none; }
+            QComboBox QAbstractItemView {
+                background-color: #111A2D;
+                color: #E6AA68;
+                selection-background-color: #E6AA68;
+                selection-color: #111A2D;
             }
         """)
-            self.buttons.append(button)
-        for button in self.buttons:
-            button.clicked.connect(self.button_clicked)
-    def button_clicked(self):
-        button = self.sender()
-        if button.text() == "Regresar":
-            self.main_window = MainDesc()  
-            self.main_window.show()
-            self.close()
+
+        # Campos de edición
+        porcentaje_label = QLabel("Porcentaje de Descuento:")
+        porcentaje_label.setStyleSheet("color: #E6AA68; font-size: 16px;")
+        self.porcentaje_input = QLineEdit()
+        self.porcentaje_input.setStyleSheet("""
+            QLineEdit {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                font-size: 14px;
+                background-color: #111A2D;
+                color: #E6AA68;
+            }
+        """)
+
+        precio_final_label = QLabel("Precio Final:")
+        precio_final_label.setStyleSheet("color: #E6AA68; font-size: 16px;")
+        self.precio_final_input = QLineEdit()
+        self.precio_final_input.setStyleSheet("""
+            QLineEdit {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                font-size: 14px;
+                background-color: #111A2D;
+                color: #E6AA68;
+            }
+        """)
+
+        # Botones
+        button_layout = QHBoxLayout()
+        self.btn_cancelar = QPushButton("Cancelar")
+        self.btn_confirmar = QPushButton("Confirmar")
+        
+        for btn in [self.btn_cancelar, self.btn_confirmar]:
+            btn.setFixedSize(100, 30)
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #E6AA68;
+                    border-radius: 10px;
+                    color: #111A2D;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #D69958;
+                }
+                QPushButton:pressed {
+                    background-color: #C68948;
+                }
+            """)
+            button_layout.addWidget(btn)
+
+        # Añadir widgets al layout
+        layout.addWidget(descuento_label)
+        layout.addWidget(self.descuento_combo)
+        layout.addWidget(porcentaje_label)
+        layout.addWidget(self.porcentaje_input)
+        layout.addWidget(precio_final_label)
+        layout.addWidget(self.precio_final_input)
+        layout.addLayout(button_layout)
+
+        # Conexiones
+        self.btn_cancelar.clicked.connect(self.close)
+        self.btn_confirmar.clicked.connect(self.guardar_cambios)
+        self.descuento_combo.currentIndexChanged.connect(self.cargar_datos_descuento)
+
+        # Cargar descuentos existentes
+        self.cargar_descuentos()
+
+    def cargar_descuentos(self):
+        try:
+            descuentos = mostrar_descuentos()
+            self.descuento_combo.addItem("Seleccione un descuento")
+            for descuento in descuentos:
+                self.descuento_combo.addItem(str(descuento))
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar descuentos: {str(e)}")
+
+    def cargar_datos_descuento(self):
+        descuento_id = self.descuento_combo.currentText()
+        if descuento_id and descuento_id != "Seleccione un descuento":
+            try:
+                descuentos = obtener_descuentos()  # Usar el método existente
+                for descuento in descuentos:
+                    if str(descuento[0]) == descuento_id:  # Comparar con el ID seleccionado
+                        self.porcentaje_input.setText(str(descuento[1]))  # Porcentaje
+                        self.precio_final_input.setText(str(descuento[3]))  # Precio final
+                        break
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Error al cargar datos del descuento: {str(e)}")
+
+    def guardar_cambios(self):
+        descuento_id = self.descuento_combo.currentText()
+        if descuento_id == "Seleccione un descuento":
+            QMessageBox.warning(self, "Advertencia", "Por favor seleccione un descuento")
+            return
+
+        try:
+            porcentaje = float(self.porcentaje_input.text())
+            precio_final = float(self.precio_final_input.text())
+
+            conexion = conectar_db()
+            if conexion:
+                cursor = conexion.cursor()
+                sql = """
+                    UPDATE descuentos 
+                    SET Porcentaje = %s, Precio_final = %s 
+                    WHERE ID_descuento = %s
+                """
+                cursor.execute(sql, (porcentaje, precio_final, descuento_id))
+                conexion.commit()
+                cursor.close()
+                conexion.close()
+
+                QMessageBox.information(self, "Éxito", "Descuento actualizado correctamente")
+                self.descuento_editado.emit()
+                self.close()
+        except ValueError:
+            QMessageBox.warning(self, "Error", "Por favor ingrese valores numéricos válidos")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al actualizar descuento: {str(e)}")
+
 #####################################################################################################
 
 class ListaDto(QMainWindow):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         self.setWindowTitle("Descuentos")
         self.setFixedSize(1366, 768)
@@ -508,12 +663,11 @@ class ListaDto(QMainWindow):
 
 
     def cargar_descuentos(self):
-        #Carga los descuentos desde la base de datos y los muestra en la tabla.
         try:
-            descuentos = obtener_descuentos()
+            descuentos = obtener_descuentos()  # Esta función ya filtra los descuentos ocultos
         
             if not descuentos:
-                print("No hay descuentos para mostrar.")
+                print("No hay descuentos activos para mostrar.")
                 return
 
             self.tabla_descuentos.setRowCount(len(descuentos))
@@ -521,7 +675,7 @@ class ListaDto(QMainWindow):
                 for columna, dato in enumerate(descuento):
                     self.tabla_descuentos.setItem(fila, columna, QTableWidgetItem(str(dato)))
 
-            self.tabla_descuentos.viewport().update()  # Asegura que la tabla se actualice visualmente
+            self.tabla_descuentos.viewport().update()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al cargar descuentos: {str(e)}")
 

@@ -397,7 +397,7 @@ class AgregarProducto(QMainWindow):
 
 ######################################################################################################
 class EliminarProducto(QMainWindow):
-    producto_eliminado = pyqtSignal()  # Nueva señal
+    producto_eliminado = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -476,13 +476,9 @@ class EliminarProducto(QMainWindow):
             button.clicked.connect(self.button_clicked)
 
     def cargar_productos(self):
-        # Primero agregamos un ítem por defecto
         self.producto_combo.addItem("Seleccionar producto")
-        
         try:
-            from conexion import mostrar_productos
-            productos = mostrar_productos(ocultar_especiales=True)
-            # Agregamos solo los nombres de los productos al combo
+            productos = conexion.mostrar_productos(ocultar_especiales=True)
             for producto in productos:
                 self.producto_combo.addItem(producto[1])  # producto[1] es el nombre
         except Exception as e:
@@ -495,21 +491,29 @@ class EliminarProducto(QMainWindow):
         elif button.text() == "Eliminar":
             producto_seleccionado = self.producto_combo.currentText()
             if producto_seleccionado != "Seleccionar producto":
-                try:
-                    from conexion import eliminar_producto
-                    eliminar_producto(producto_seleccionado)
-
-                    for widget in QApplication.topLevelWidgets():
-                        if isinstance(widget, MainWindow):
-                            widget.cargar_datos()
-                            break
-                    
-                    QMessageBox.information(self, "Éxito", "Producto eliminado correctamente")
-                    self.producto_eliminado.emit()  # Emitir señal
-                    self.producto_combo.clear()
-                    self.cargar_productos()
-                except Exception as e:
-                    QMessageBox.critical(self, "Error", f"No se pudo eliminar el producto:\n{str(e)}")
+                reply = QMessageBox.question(
+                    self,
+                    'Confirmación',
+                    '¿Está seguro de ocultar este producto?\nNo estará disponible para su venta.',
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                )
+                
+                if reply == QMessageBox.StandardButton.Yes:
+                    try:
+                        conexion.ocultar_producto(producto_seleccionado)
+                        QMessageBox.information(self, "Éxito", "Producto ocultado correctamente")
+                        
+                        # Actualizar la tabla principal si está visible
+                        for widget in QApplication.topLevelWidgets():
+                            if isinstance(widget, MainWindow):
+                                widget.cargar_datos()
+                                break
+                        
+                        self.producto_eliminado.emit()
+                        self.producto_combo.clear()
+                        self.cargar_productos()
+                    except Exception as e:
+                        QMessageBox.critical(self, "Error", f"No se pudo ocultar el producto:\n{str(e)}")
             else:
                 QMessageBox.warning(self, "Advertencia", "Por favor seleccione un producto")
 

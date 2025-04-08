@@ -496,6 +496,7 @@ class VentanaBebidas(QMainWindow):
         layout.addWidget(self.agregar_btn)
         
         self.agregar_btn.clicked.connect(self.agregar_bebida)
+        self.bebida_combo.currentTextChanged.connect(self.actualizar_stock_disponible)
 
     def cargar_bebidas(self):
         connection = None
@@ -520,6 +521,16 @@ class VentanaBebidas(QMainWindow):
             if connection:
                 connection.close()
 
+    def actualizar_stock_disponible(self, bebida):
+        if bebida:
+            stock = conexion.obtener_stock_producto(bebida)
+            self.cantidad_spin.setMaximum(stock)
+            if stock == 0:
+                self.agregar_btn.setEnabled(False)
+                QMessageBox.warning(self, "Sin Stock", f"No hay stock disponible de {bebida}")
+            else:
+                self.agregar_btn.setEnabled(True)
+
     def agregar_bebida(self):
         bebida = self.bebida_combo.currentText()
         
@@ -529,6 +540,12 @@ class VentanaBebidas(QMainWindow):
             return
             
         cantidad = self.cantidad_spin.value()
+        stock_actual = conexion.obtener_stock_producto(bebida)
+        
+        if stock_actual < cantidad:
+            QMessageBox.warning(self, "Error", f"Stock insuficiente. Solo hay {stock_actual} unidades disponibles")
+            return
+            
         precio = conexion.obtener_precio_producto(bebida)
         
         if precio is not None:
@@ -600,6 +617,7 @@ class VentanaComida(QMainWindow):
         layout.addWidget(self.agregar_btn)
         
         self.agregar_btn.clicked.connect(self.agregar_comida)
+        self.comida_combo.currentTextChanged.connect(self.actualizar_stock_disponible)
 
     def cargar_comidas(self):
         connection = None
@@ -623,15 +641,30 @@ class VentanaComida(QMainWindow):
             if connection:
                 connection.close()
 
+    def actualizar_stock_disponible(self, comida):
+        if comida:
+            stock = conexion.obtener_stock_producto(comida)
+            self.cantidad_spin.setMaximum(stock)
+            if stock == 0:
+                self.agregar_btn.setEnabled(False)
+                QMessageBox.warning(self, "Sin Stock", f"No hay stock disponible de {comida}")
+            else:
+                self.agregar_btn.setEnabled(True)
+
     def agregar_comida(self):
         comida = self.comida_combo.currentText()
         
-        # Validar que no sea un nombre genérico
         if comida == "Comida" or not comida:
             QMessageBox.warning(self, "Error", "Por favor seleccione un producto")
             return
             
         cantidad = self.cantidad_spin.value()
+        stock_actual = conexion.obtener_stock_producto(comida)
+        
+        if stock_actual < cantidad:
+            QMessageBox.warning(self, "Error", f"Stock insuficiente. Solo hay {stock_actual} unidades disponibles")
+            return
+            
         precio = conexion.obtener_precio_producto(comida)
         
         if precio is not None:

@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QTableWidget, QHeaderView, QTableWidgetItem, QLineEdit, QTextEdit
 )
 from PyQt6.QtGui import QPixmap
-from conexion import eliminar_combo, mostrar_combos
+from conexion import eliminar_combo, mostrar_combos, ocultar_combo
 
 #####################################################
 class MainCombo(QMainWindow):
@@ -390,12 +390,11 @@ class EliminarCombo(QMainWindow):
             button.clicked.connect(self.button_clicked)
 
     def cargar_combos(self):
-        # Primero agregamos un ítem por defecto
+        self.combo_combo.clear()
         self.combo_combo.addItem("Seleccionar combo")
 
         try:
-            combos = mostrar_combos()
-            # Agregamos solo los nombres de los combos al combo
+            combos = mostrar_combos()  # Esta función ya filtra los combos ocultos
             for combo in combos:
                 self.combo_combo.addItem(combo[0])  # combo[0] es el nombre del combo
         except Exception as e:
@@ -409,12 +408,20 @@ class EliminarCombo(QMainWindow):
             combo_seleccionado = self.combo_combo.currentText()
             if combo_seleccionado != "Seleccionar combo":
                 try:
-                    eliminar_combo(combo_seleccionado)
-                    QMessageBox.information(self, "Éxito", "Combo eliminado correctamente")
-                    self.combo_eliminado.emit()
-                    self.close()
+                    reply = QMessageBox.question(
+                        self,
+                        'Confirmación',
+                        '¿Está seguro de ocultar este combo?\nNo estará disponible para su uso.',
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                    )
+                    
+                    if reply == QMessageBox.StandardButton.Yes:
+                        ocultar_combo(combo_seleccionado)  # Usar la nueva función
+                        QMessageBox.information(self, "Éxito", "Combo ocultado correctamente")
+                        self.combo_eliminado.emit()
+                        self.close()
                 except Exception as e:
-                    QMessageBox.critical(self, "Error", f"No se pudo eliminar el combo:\n{str(e)}")
+                    QMessageBox.critical(self, "Error", f"No se pudo ocultar el combo:\n{str(e)}")
             else:
                 QMessageBox.warning(self, "Advertencia", "Por favor seleccione un combo")
 
