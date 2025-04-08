@@ -9,7 +9,7 @@ def obtener_credenciales_db():
     return {
         'host': "localhost",
         'user': "root",
-        'passwd': "1234",
+        'passwd': "894388",
         'database': "tienda"
     }
 
@@ -807,3 +807,35 @@ def obtener_stock_producto(nombre_producto):
     finally:
         if connection:
             connection.close()
+
+def actualizar_usuario(id_usuario, datos_actualizados):
+    """
+    Actualiza los datos de un usuario en la base de datos.
+    
+    :param id_usuario: ID del usuario a actualizar.
+    :param datos_actualizados: Diccionario con los datos a actualizar.
+    """
+    try:
+        conexion = conectar_db()
+        if conexion:
+            cursor = conexion.cursor()
+            
+            # Crear la cláusula SET dinámicamente a partir de los datos proporcionados
+            set_clause = ", ".join([f"{columna} = %s" for columna in datos_actualizados.keys()])
+            valores = list(datos_actualizados.values())
+            
+            # Agregar el ID del usuario al final de los valores
+            valores.append(id_usuario)
+            
+            # Construir la consulta SQL
+            sql = f"UPDATE usuario SET {set_clause} WHERE ID_usuario = %s"
+            
+            # Ejecutar la consulta
+            cursor.execute(sql, valores)
+            conexion.commit()
+            
+            cursor.close()
+            conexion.close()
+            return True
+    except Exception as e:
+        raise Exception(f"Error al actualizar usuario: {str(e)}")

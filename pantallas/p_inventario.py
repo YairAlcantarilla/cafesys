@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
         self.table_widget.setGeometry(355, 131, 690, 555)  # x, y, width, height
         self.table_widget.setColumnCount(4)
         self.table_widget.setHorizontalHeaderLabels([
-            "ID", "Nombre", "Categoria", "Stock"
+            "Nombre", "Precio", "Categoria", "Stock"
         ])
 
         # Estilo de la tabla
@@ -109,9 +109,9 @@ class MainWindow(QMainWindow):
             
             for fila, producto in enumerate(productos):
                 self.table_widget.setItem(fila, 0, QTableWidgetItem(str(producto[1])))
-                self.table_widget.setItem(fila, 1, QTableWidgetItem(str(producto[2])))
+                self.table_widget.setItem(fila, 1, QTableWidgetItem(f"${str(producto[2])}"))
                 self.table_widget.setItem(fila, 2, QTableWidgetItem(str(producto[3])))
-                self.table_widget.setItem(fila, 3, QTableWidgetItem(f"${str(producto[4])}"))
+                self.table_widget.setItem(fila, 3, QTableWidgetItem(str(producto[4])))
         except Exception as e:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Icon.Critical)
