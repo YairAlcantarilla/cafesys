@@ -1,19 +1,18 @@
 ========================================
 CAFETERÍA SISTEMA
 ========================================
-Fecha: 05/04/2025
-Cliente: Fulano
+Fecha: 07/04/2025
+Cliente: La Grasa
 ----------------------------------------
 PRODUCTO          CANT    PRECIO    TOTAL
 ----------------------------------------
-Capuccino         1      $30.00  $30.00
-Pastel            1      $40.00  $40.00
+Combo grasoso :   99   $9999.00$989901.00
 ----------------------------------------
-Total Artículos: 2
-Total a Pagar: $70.00
+Total Artículos: 99
+Total a Pagar: $989901.00
 ----------------------------------------
-Efectivo Recibido: $100.00
-Cambio: $30.00
+Efectivo Recibido: $1000000.00
+Cambio: $10099.00
 ========================================
 ¡Gracias por su compra!
 ========================================

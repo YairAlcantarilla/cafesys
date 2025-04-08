@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QTableWidget, QHeaderView, QTableWidgetItem, QLineEdit, QTextEdit
 )
 from PyQt6.QtGui import QPixmap
-from conexion import eliminar_combo, mostrar_combos
+from conexion import eliminar_combo, mostrar_combos, ocultar_combo
 
 #####################################################
 class MainCombo(QMainWindow):
@@ -168,7 +168,7 @@ class AgregarCombo(QMainWindow):
         self.setCentralWidget(central_widget)
 
         background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/ACOMB.png')
+        pixmap = QPixmap('imagenes/addcombo.png')
         background_label.setPixmap(pixmap)
         background_label.setScaledContents(True)
         central_layout = QVBoxLayout(central_widget)
@@ -314,19 +314,31 @@ class EliminarCombo(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Eliminar Combo")
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+
+        
+        # Fondo
+        background_label = QLabel(central_widget)
+        pixmap = QPixmap('imagenes/ELIMCOMBO.png')
+        background_label.setPixmap(pixmap)
+        background_label.setScaledContents(True)
+        central_layout = QVBoxLayout(central_widget)
+        central_layout.addWidget(background_label)
+
+        self.setWindowTitle("Eliminar Combo") 
         self.setFixedSize(400, 300)
         self.setStyleSheet("background-color: #111A2D;")
 
         # Crear labels
         label = QLabel("Seleccione combo:", self)
         label.setStyleSheet("color: #E6AA68; font-size: 14px;")
-        label.move(30, 30)
+        label.move(30, 120)
 
         # Crear ComboBox para combos
         self.combo_combo = QComboBox(self)
         self.combo_combo.setFixedSize(200, 30)
-        self.combo_combo.move(160, 25)
+        self.combo_combo.move(160, 120)
         self.combo_combo.setStyleSheet("""
             QComboBox {
                 border: 1px solid #E6AA68;
@@ -378,12 +390,11 @@ class EliminarCombo(QMainWindow):
             button.clicked.connect(self.button_clicked)
 
     def cargar_combos(self):
-        # Primero agregamos un ítem por defecto
+        self.combo_combo.clear()
         self.combo_combo.addItem("Seleccionar combo")
 
         try:
-            combos = mostrar_combos()
-            # Agregamos solo los nombres de los combos al combo
+            combos = mostrar_combos()  # Esta función ya filtra los combos ocultos
             for combo in combos:
                 self.combo_combo.addItem(combo[0])  # combo[0] es el nombre del combo
         except Exception as e:
@@ -397,12 +408,20 @@ class EliminarCombo(QMainWindow):
             combo_seleccionado = self.combo_combo.currentText()
             if combo_seleccionado != "Seleccionar combo":
                 try:
-                    eliminar_combo(combo_seleccionado)
-                    QMessageBox.information(self, "Éxito", "Combo eliminado correctamente")
-                    self.combo_eliminado.emit()
-                    self.close()
+                    reply = QMessageBox.question(
+                        self,
+                        'Confirmación',
+                        '¿Está seguro de ocultar este combo?\nNo estará disponible para su uso.',
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                    )
+                    
+                    if reply == QMessageBox.StandardButton.Yes:
+                        ocultar_combo(combo_seleccionado)  # Usar la nueva función
+                        QMessageBox.information(self, "Éxito", "Combo ocultado correctamente")
+                        self.combo_eliminado.emit()
+                        self.close()
                 except Exception as e:
-                    QMessageBox.critical(self, "Error", f"No se pudo eliminar el combo:\n{str(e)}")
+                    QMessageBox.critical(self, "Error", f"No se pudo ocultar el combo:\n{str(e)}")
             else:
                 QMessageBox.warning(self, "Advertencia", "Por favor seleccione un combo")
 
@@ -413,11 +432,24 @@ class EditarCombo(QMainWindow):
 
     def __init__(self):
         super().__init__()
+
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+
+        
+        # Fondo
+        background_label = QLabel(central_widget)
+        pixmap = QPixmap('imagenes/EDITCOM.png')
+        background_label.setPixmap(pixmap)
+        background_label.setScaledContents(True)
+        central_layout = QVBoxLayout(central_widget)
+        central_layout.addWidget(background_label)
+
+
         self.setWindowTitle("Editar Combo")
         self.setFixedSize(500, 500)
         
-        central_widget = QWidget(self)
-        self.setCentralWidget(central_widget)
+   
         layout = QVBoxLayout(central_widget)
 
         # Fondo
@@ -455,8 +487,8 @@ class EditarCombo(QMainWindow):
 
         # Botones
         button_configs = [
-            ["Guardar", 73, 420, 100, 60],
-            ["Cancelar", 227, 420, 100, 60],
+            ["Guardar", 126, 413, 97, 60],
+            ["Cancelar", 279, 413, 95, 60],
         ]
         
         self.buttons = []
@@ -507,7 +539,7 @@ class EditarCombo(QMainWindow):
     def estilo_boton(self):
         return """
             QPushButton {
-                background-color: rgba(255, 255, 255, 0);
+                background-color: rgba(255, 255, 255, 80);
                 border: 0px solid white;
                 border-radius: 10px;
                 color: transparent;

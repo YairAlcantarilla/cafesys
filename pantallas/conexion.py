@@ -71,16 +71,19 @@ def mostrar_productos(ocultar_especiales=True):
         cursor = conexion.cursor()
         
         if ocultar_especiales:
-            # Query que excluye productos con "Comida" o "Bebida" en el nombre
             query = """
                 SELECT * FROM Producto 
-                WHERE Nombre NOT LIKE '%Comida%' 
+                WHERE oculto = 0
+                AND Nombre NOT LIKE '%Comida%' 
                 AND Nombre NOT LIKE '%Bebida%'
                 ORDER BY Nombre
             """
         else:
-            # Query original que muestra todos los productos
-            query = "SELECT * FROM Producto ORDER BY Nombre"
+            query = """
+                SELECT * FROM Producto 
+                WHERE oculto = 0 
+                ORDER BY Nombre
+            """
             
         cursor.execute(query)
         productos = cursor.fetchall()
@@ -118,6 +121,57 @@ def mostrar_usuarios():
         finally:
             conexion.close()
     return []
+
+def mostrar_usuarios_activos():
+    """Muestra solo los usuarios que no están ocultos"""
+    try:
+        conexion = conectar_db()
+        if conexion:
+            cursor = conexion.cursor()
+            cursor.execute("""
+                SELECT id_usuario, contrasenna, nombre, correo, Direccion, ID_Puesto 
+                FROM usuario 
+                WHERE oculto = 0
+            """)
+            usuarios = cursor.fetchall()
+            cursor.close()
+            conexion.close()
+            return usuarios
+    except Exception as e:
+        raise Exception(f"Error al obtener usuarios activos: {str(e)}")
+    return []
+
+def ocultar_usuario(id_usuario):
+    """Marca un usuario como oculto en lugar de eliminarlo"""
+    try:
+        conexion = conectar_db()
+        if conexion:
+            cursor = conexion.cursor()
+            cursor.execute("UPDATE usuario SET oculto = 1 WHERE ID_usuario = %s", (id_usuario,))
+            conexion.commit()
+            cursor.close()
+            conexion.close()
+    except Exception as e:
+        raise Exception(f"Error al ocultar usuario: {str(e)}")
+
+def contar_administradores_activos():
+    """Cuenta cuántos administradores activos hay en el sistema"""
+    try:
+        conexion = conectar_db()
+        if conexion:
+            cursor = conexion.cursor()
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM usuario 
+                WHERE ID_Puesto = 1 AND oculto = 0
+            """)
+            count = cursor.fetchone()[0]
+            cursor.close()
+            conexion.close()
+            return count
+    except Exception as e:
+        raise Exception(f"Error al contar administradores: {str(e)}")
+    return 0
 
 def insertar_usuario(datos):
     conexion = conectar_db()
@@ -245,19 +299,15 @@ def verificar_credenciales(ID_usuario, contrasenna):
         conexion = conectar_db()
         cursor = conexion.cursor()
         
-        # Consulta modificada para seleccionar los campos específicos
         consulta = """
             SELECT ID_usuario, Nombre, ID_Puesto 
             FROM usuario 
-            WHERE ID_usuario = %s AND contrasenna = %s
+            WHERE ID_usuario = %s 
+            AND contrasenna = %s 
+            AND oculto = 0
         """
         cursor.execute(consulta, (ID_usuario, contrasenna))
         resultado = cursor.fetchone()
-        
-        # Agregar print para debug
-        print(f"Consulta SQL: {consulta}")
-        print(f"Parámetros: ID_usuario={ID_usuario}, contraseña={contrasenna}")
-        print(f"Resultado de la consulta: {resultado}")
         
         cursor.close()
         conexion.close()
@@ -305,11 +355,10 @@ def obtener_datos_usuario(ID_usuario):
         conexion = conectar_db()
         cursor = conexion.cursor()
         
-        # Consulta para obtener los datos necesarios
         consulta = """
             SELECT ID_usuario, contrasenna, Nombre, correo, ID_Puesto 
             FROM usuario 
-            WHERE ID_usuario = %s
+            WHERE ID_usuario = %s AND oculto = 0
         """
         cursor.execute(consulta, (ID_usuario,))
         resultado = cursor.fetchone()
@@ -353,6 +402,7 @@ def agregar_combo(nombre, producto1, producto2, precio):
 
 
 def mostrar_combos():
+    """Muestra solo los combos que no están ocultos"""
     try:
         conexion = conectar_db()
         if not conexion:
@@ -365,14 +415,12 @@ def mostrar_combos():
         FROM combos c
         JOIN producto p1 ON c.Producto1_ID = p1.ID_producto
         JOIN producto p2 ON c.Producto2_ID = p2.ID_producto
+        WHERE c.oculto = 0
         ORDER BY c.Nombre
         """
         
         cursor.execute(consulta)
         combos = cursor.fetchall()
-        
-        # Debug para verificar los datos
-        print("Datos obtenidos de la base de datos:", combos)
         
         cursor.close()
         conexion.close()
@@ -382,6 +430,31 @@ def mostrar_combos():
         print(f"Error en mostrar_combos: {e}")
         return []
 
+def ocultar_combo(nombre_combo):
+    """Marca un combo como oculto en lugar de eliminarlo"""
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        if conexion.is_connected():
+            # Verifica si el combo existe
+            check_query = "SELECT COUNT(*) FROM combos WHERE Nombre = %s AND oculto = 0"
+            cursor.execute(check_query, (nombre_combo,))
+            result = cursor.fetchone()
+            if result[0] == 0:
+                raise Exception(f"Combo '{nombre_combo}' no encontrado o ya está oculto.")
+
+            # SQL para ocultar el combo
+            query = "UPDATE combos SET oculto = 1 WHERE Nombre = %s"
+            cursor.execute(query, (nombre_combo,))
+            
+            conexion.commit()
+
+    except Error as e:
+        raise Exception(f"Error al ocultar combo: {str(e)}")
+    finally:
+        if conexion and conexion.is_connected():
+            cursor.close()
+            conexion.close()
 
 from mysql.connector import Error  # Asegúrate de importar Error correctamente
 
@@ -552,7 +625,11 @@ def obtener_combo_por_nombre(nombre_combo):
         conexion = conectar_db() 
         cursor = conexion.cursor()
 
-        cursor.execute("SELECT id, nombre, precio FROM combos WHERE nombre = %s", (nombre_combo,))
+        cursor.execute("""
+            SELECT id, nombre, precio 
+            FROM combos 
+            WHERE nombre = %s AND oculto = 0
+        """, (nombre_combo,))
         combo = cursor.fetchone()
 
         conexion.close()
@@ -571,7 +648,7 @@ def cargar_datos_combo(nombre_combo):
             FROM combos c
             JOIN producto p1 ON c.Producto1_ID = p1.ID_producto
             JOIN producto p2 ON c.Producto2_ID = p2.ID_producto
-            WHERE c.Nombre = %s
+            WHERE c.Nombre = %s AND c.oculto = 0
         """
         
         cursor.execute(consulta, (nombre_combo,))
@@ -586,23 +663,49 @@ def cargar_datos_combo(nombre_combo):
         return None
 
 def obtener_descuentos():
-    conexion = conectar_db()
-    cursor = conexion.cursor()
-    
-    cursor.execute("""
-            SELECT ID_descuento, Porcentaje, Producto_ID, Precio_final FROM descuentos
+    """Obtiene solo los descuentos activos con información del producto"""
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        
+        cursor.execute("""
+            SELECT d.ID_descuento, d.Porcentaje, d.Producto_ID, d.Precio_final
+            FROM descuentos d
+            JOIN producto p ON d.Producto_ID = p.ID_producto
+            WHERE d.oculto = 0
+            ORDER BY d.ID_descuento
         """)
-    descuentos = cursor.fetchall()
-    conexion.close()
-    return descuentos
+        
+        descuentos = cursor.fetchall()
+        cursor.close()
+        conexion.close()
+        return descuentos
+    except Exception as e:
+        print(f"Error al obtener descuentos: {e}")
+        return []
 
 def agregar_descuento(producto, descuento, precio_final):
     conexion = conectar_db()
     cursor = conexion.cursor()
-    cursor.execute("INSERT INTO descuentos (Porcentaje, Producto_ID, Precio_final) VALUES (%s, %s, %s)", 
-                   (descuento, producto, precio_final))
-    conexion.commit()
-    conexion.close()
+    try:
+        # First get the product ID
+        cursor.execute("SELECT ID_producto FROM producto WHERE Nombre = %s", (producto,))
+        resultado = cursor.fetchone()
+        if not resultado:
+            raise Exception("Producto no encontrado")
+        producto_id = resultado[0]
+
+        # Then insert the discount with the product ID
+        cursor.execute("""
+            INSERT INTO descuentos (Porcentaje, Producto_ID, Precio_final) 
+            VALUES (%s, %s, %s)
+        """, (descuento, producto_id, precio_final))
+        
+        conexion.commit()
+    except Exception as e:
+        raise Exception(f"Error al agregar descuento: {str(e)}")
+    finally:
+        conexion.close()
 
 def mostrar_descuentos():
     try:
@@ -619,16 +722,16 @@ def mostrar_descuentos():
         print(f"Error al obtener descuentos: {e}")
         return []
 
-def eliminar_descuento(nombre_descuento):
+def ocultar_descuento(id_descuento):
+    """Marca un descuento como oculto en lugar de eliminarlo"""
     try:
         conexion = conectar_db()
         cursor = conexion.cursor()
-        cursor.execute("DELETE FROM descuentos WHERE ID_descuento = %s", (nombre_descuento,))
+        cursor.execute("UPDATE descuentos SET oculto = 1 WHERE ID_descuento = %s", (id_descuento,))
         conexion.commit()
         conexion.close()
     except Exception as e:
-        print(f"Error al eliminar descuento: {e}")
-        raise
+        raise Exception(f"Error al ocultar descuento: {str(e)}")
 
 def actualizar_combo(nombre_original, datos):
     try:
@@ -670,3 +773,37 @@ def actualizar_combo(nombre_original, datos):
     except Exception as e:
         print(f"Error al actualizar combo: {e}")
         raise Exception(f"Error al actualizar combo: {str(e)}")
+
+def ocultar_producto(nombre_producto):
+    """Marca un producto como oculto en lugar de eliminarlo"""
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        
+        # SQL para ocultar el producto
+        sql = "UPDATE Producto SET oculto = 1 WHERE Nombre = %s"
+        cursor.execute(sql, (nombre_producto,))
+        
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+        
+        return True
+    except Exception as e:
+        raise Exception(f"Error al ocultar el producto: {str(e)}")
+
+def obtener_stock_producto(nombre_producto):
+    """Obtiene el stock disponible de un producto"""
+    try:
+        connection = conectar_db()
+        if connection:
+            cursor = connection.cursor()
+            cursor.execute("SELECT Cantidad FROM Producto WHERE Nombre = %s", (nombre_producto,))
+            resultado = cursor.fetchone()
+            return resultado[0] if resultado else 0
+    except Exception as e:
+        print(f"Error al obtener stock: {e}")
+        return 0
+    finally:
+        if connection:
+            connection.close()

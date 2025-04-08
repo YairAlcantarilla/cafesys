@@ -106,8 +106,7 @@ class MainPersonal(QMainWindow):
 
     def cargar_datos(self):
         try:
-            from conexion import mostrar_usuarios
-            usuarios = mostrar_usuarios()
+            usuarios = conexion.mostrar_usuarios_activos()  # Cambiar aquí
             
             self.table_widget.setRowCount(len(usuarios))
             
@@ -115,7 +114,7 @@ class MainPersonal(QMainWindow):
                 self.table_widget.setItem(fila, 0, QTableWidgetItem(str(usuario[0])))  # ID
                 self.table_widget.setItem(fila, 1, QTableWidgetItem('*****'))          # Contraseña oculta
                 self.table_widget.setItem(fila, 2, QTableWidgetItem(str(usuario[2])))  # Nombre
-                self.table_widget.setItem(fila, 3, QTableWidgetItem(str(usuario[3])))  # Teléfono
+                self.table_widget.setItem(fila, 3, QTableWidgetItem(str(usuario[3])))  # Correo
                 self.table_widget.setItem(fila, 4, QTableWidgetItem(str(usuario[4])))  # Dirección
                 self.table_widget.setItem(fila, 5, QTableWidgetItem(str(usuario[5])))  # ID_Puesto
         except Exception as e:
@@ -498,10 +497,11 @@ class EliminarE(QMainWindow):
 
     def cargar_usuarios(self):
         try:
-            usuarios = conexion.mostrar_usuarios()
+            usuarios = conexion.mostrar_usuarios_activos()
+            self.usuario_combo.clear()
             self.usuario_combo.addItem("Seleccionar usuario")
             for usuario in usuarios:
-                self.usuario_combo.addItem(f"{usuario[0]} - {usuario[2]}")  # ID - Nombre
+                self.usuario_combo.addItem(f"{usuario[0]} - {usuario[2]}")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al cargar usuarios: {str(e)}")
 
@@ -513,51 +513,45 @@ class EliminarE(QMainWindow):
             if self.usuario_combo.currentText() != "Seleccionar usuario":
                 try:
                     id_usuario = self.usuario_combo.currentText().split(" - ")[0]
-
-                    usuarios = conexion.mostrar_usuarios()
                     
-
+                    # Verificar si es administrador
+                    usuarios = conexion.mostrar_usuarios_activos()
                     usuario_actual = None
                     for usuario in usuarios:
                         if str(usuario[0]) == id_usuario:
                             usuario_actual = usuario
                             break
                     
-                    if usuario_actual is None:
-                        QMessageBox.warning(self, "Error", "Usuario no encontrado")
-                        return
-                    
-
-                    if usuario_actual[5] == 1:  # ID_Puesto = 1 es de administrador
-                        # Checkeo de admins
-                        count_admin = sum(1 for user in usuarios if user[5] == 1)
-                        
+                    if usuario_actual and usuario_actual[5] == 1:  # Es administrador
+                        count_admin = conexion.contar_administradores_activos()
                         if count_admin <= 1:
                             QMessageBox.warning(
                                 self, 
                                 "Advertencia", 
-                                "No se puede eliminar el usuario. Debe haber al menos un administrador en el sistema."
+                                "No se puede ocultar el usuario. Debe haber al menos un administrador activo en el sistema."
                             )
                             return
 
                     reply = QMessageBox.question(
                         self, 
                         'Confirmación',
-                        '¿Está seguro de eliminar este usuario?',
+                        '¿Está seguro de ocultar este usuario?',
                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
                     )
                     
                     if reply == QMessageBox.StandardButton.Yes:
-                        conexion.eliminar_usuario(id_usuario)
-                        QMessageBox.information(self, "Éxito", "Usuario eliminado correctamente")
+                        conexion.ocultar_usuario(id_usuario)
+                        QMessageBox.information(self, "Éxito", "Usuario ocultado correctamente")
+                        self.usuario_combo.clear()
                         self.cargar_usuarios()
+                        # Actualizar la tabla principal si está visible
                         for widget in QApplication.topLevelWidgets():
                             if isinstance(widget, MainPersonal):
                                 widget.cargar_datos()
                 except Exception as e:
-                    QMessageBox.critical(self, "Error", f"No se pudo eliminar el usuario: {str(e)}")
+                    QMessageBox.critical(self, "Error", f"No se pudo ocultar el usuario: {str(e)}")
             else:
-                QMessageBox.warning(self, "Advertencia", "Por favor seleccione un usuario para eliminar")
+                QMessageBox.warning(self, "Advertencia", "Por favor seleccione un usuario para ocultar")
         
     def fade_out(self):
         self.animation = QPropertyAnimation(self, b"windowOpacity")
