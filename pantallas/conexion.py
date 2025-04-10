@@ -441,7 +441,7 @@ def mostrar_combos():
         cursor = conexion.cursor()
         
         cursor.execute("""
-            SELECT c.nombre, GROUP_CONCAT(cp.producto_nombre) as productos, c.precio
+            SELECT c.nombre, GROUP_CONCAT(cp.producto_nombre SEPARATOR ', ') as productos, c.precio
             FROM combos c
             LEFT JOIN combo_productos cp ON c.id = cp.combo_id
             WHERE c.oculto = 0
@@ -678,18 +678,10 @@ def cargar_datos_combo(nombre_combo):
         """, (nombre_combo,))
         
         resultado = cursor.fetchone()
-        if resultado:
-            nombre = resultado[0]
-            productos = resultado[1].split(',') if resultado[1] else []
-            precio = resultado[2]
-            
-            # Asegurar que tenemos al menos dos productos
-            producto1 = productos[0] if len(productos) > 0 else ""
-            producto2 = productos[1] if len(productos) > 1 else ""
-            
-            return (nombre, producto1, producto2, precio)
-            
         conexion.close()
+        
+        if resultado:
+            return resultado  # (nombre, productos_concatenados, precio)
         return None
         
     except Exception as e:
@@ -807,6 +799,39 @@ def actualizar_combo(nombre_original, datos):
     except Exception as e:
         print(f"Error al actualizar combo: {e}")
         raise Exception(f"Error al actualizar combo: {str(e)}")
+
+def actualizar_combo_multiple(nombre_original, nombre_nuevo, productos, precio):
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        
+        # Actualizar datos básicos del combo
+        cursor.execute("""
+            UPDATE combos 
+            SET nombre = %s, precio = %s
+            WHERE nombre = %s
+        """, (nombre_nuevo, precio, nombre_original))
+        
+        # Obtener el ID del combo
+        cursor.execute("SELECT id FROM combos WHERE nombre = %s", (nombre_nuevo,))
+        combo_id = cursor.fetchone()[0]
+        
+        # Eliminar productos antiguos
+        cursor.execute("DELETE FROM combo_productos WHERE combo_id = %s", (combo_id,))
+        
+        # Insertar nuevos productos
+        for producto in productos:
+            cursor.execute("""
+                INSERT INTO combo_productos (combo_id, producto_nombre)
+                VALUES (%s, %s)
+            """, (combo_id, producto))
+        
+        conexion.commit()
+        conexion.close()
+        
+    except Exception as e:
+        print(f"Error al actualizar combo multiple: {str(e)}")
+        raise e
 
 def ocultar_producto(nombre_producto):
     """Marca un producto como oculto en lugar de eliminarlo"""

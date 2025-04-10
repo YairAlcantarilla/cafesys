@@ -6,15 +6,13 @@ Cliente: Cliente General
 ----------------------------------------
 PRODUCTO          CANT    PRECIO    TOTAL
 ----------------------------------------
-Capuccino         1      $30.00  $30.00
-Pastel            1      $40.00  $40.00
 Combo Mañanero    1     $120.00 $120.00
 ----------------------------------------
-Total Artículos: 3
-Total a Pagar: $190.00
+Total Artículos: 1
+Total a Pagar: $120.00
 ----------------------------------------
-Efectivo Recibido: $199.00
-Cambio: $9.00
+Efectivo Recibido: $123.00
+Cambio: $3.00
 ========================================
 ¡Gracias por su compra!
 ========================================
