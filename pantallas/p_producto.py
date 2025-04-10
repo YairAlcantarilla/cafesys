@@ -79,9 +79,9 @@ class MainWindow(QMainWindow):
             ["Editar", 875, 306, 343, 55],
             ["Recargar", 875, 387, 343, 55],
             # Nuevos botones para categorías
-            ["Agregar Categoria", 875, 468, 343, 55],
-            ["Editar Categoria", 875, 549, 343, 55], 
-            ["Eliminar Categoria", 875, 630, 343, 55],
+            ["Agregar Categoria", 875, 450, 343, 55],
+            ["Editar Categoria", 875, 531, 343, 55], 
+            ["Eliminar Categoria", 875, 612, 343, 55],
             ["Regresar", 1270, 655, 77, 70],
         ]
 
@@ -95,15 +95,15 @@ class MainWindow(QMainWindow):
             if name in ["Agregar Categoria", "Editar Categoria", "Eliminar Categoria"]:
                 button.setStyleSheet("""
                     QPushButton {
-                        background-color: #E6AA68;
-                        border: 2px solid #111A2D;
+                        background-color: rgba(255, 255, 255, 0);
+                        border: 0px solid white;
                         border-radius: 10px;
-                        color: #111A2D;
+                        color: transparent;
                         font-weight: bold;
-                        font-size: 14px;
+                        font-size: 12px;
                     }
                     QPushButton:hover {
-                        background-color: #D69958;
+                        background-color: rgba(230, 170, 104, 25);
                     }
                     QPushButton:pressed {
                         background-color: rgba(230, 170, 104, 0.8);
@@ -113,18 +113,18 @@ class MainWindow(QMainWindow):
             elif name in ["Caja", "Reportes", "Productos", "Personal", "Inventario", "Ajustes", "Salir"]:
                 button.setStyleSheet("""
                     QPushButton {
-                        background-color: #111A2D;
-                        border: 2px solid #E6AA68;
+                        background-color: rgba(255, 255, 255, 0);
+                        border: 0px solid white;
                         border-radius: 10px;
-                        color: #E6AA68;
+                        color: transparent;
                         font-weight: bold;
                         font-size: 12px;
                     }
                     QPushButton:hover {
-                        background-color: rgba(230, 170, 104, 0.2);
+                        background-color: rgba(230, 170, 104, 25);
                     }
                     QPushButton:pressed {
-                        background-color: rgba(230, 170, 104, 0.4);
+                        background-color: rgba(230, 170, 104, 80);
                     }
                 """)
             # Estilo transparente para el resto de botones
@@ -137,7 +137,7 @@ class MainWindow(QMainWindow):
                         color: transparent;
                     }
                     QPushButton:hover {
-                        background-color: rgba(255, 255, 255, 0);
+                        background-color: rgba(255, 255, 255, 25);
                     }
                     QPushButton:pressed {
                         background-color: rgba(230, 170, 104, 80);
