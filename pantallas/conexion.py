@@ -405,34 +405,56 @@ def agregar_combo(nombre, producto1, producto2, precio):
         raise Exception(f"Error al agregar el combo: {str(e)}")
 
 
-def mostrar_combos():
-    """Muestra solo los combos que no están ocultos"""
+def agregar_combo_multiple(nombre, productos, precio):
     try:
         conexion = conectar_db()
-        if not conexion:
-            raise Exception("No se pudo establecer conexión con la base de datos")
-            
         cursor = conexion.cursor()
         
-        consulta = """
-        SELECT c.Nombre, p1.Nombre AS Producto1, p2.Nombre AS Producto2, c.Precio
-        FROM combos c
-        JOIN producto p1 ON c.Producto1_ID = p1.ID_producto
-        JOIN producto p2 ON c.Producto2_ID = p2.ID_producto
-        WHERE c.oculto = 0
-        ORDER BY c.Nombre
-        """
+        # Primero insertamos el combo base con oculto = 0 (visible)
+        cursor.execute("""
+            INSERT INTO combos (nombre, precio, oculto)
+            VALUES (%s, %s, 0)
+        """, (nombre, precio))
         
-        cursor.execute(consulta)
-        combos = cursor.fetchall()
+        # Obtenemos el ID del último registro insertado
+        combo_id = cursor.lastrowid
         
-        cursor.close()
+        # Luego insertamos los productos del combo
+        for producto in productos:
+            cursor.execute("""
+                INSERT INTO combo_productos (combo_id, producto_nombre)
+                VALUES (%s, %s)
+            """, (combo_id, producto))
+        
+        conexion.commit()
         conexion.close()
-        return combos
         
     except Exception as e:
-        print(f"Error en mostrar_combos: {e}")
-        return []
+        print(f"Error al agregar combo multiple: {str(e)}")
+        raise e
+
+
+def mostrar_combos():
+    """Muestra los combos que no están ocultos"""
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        
+        cursor.execute("""
+            SELECT c.nombre, GROUP_CONCAT(cp.producto_nombre) as productos, c.precio
+            FROM combos c
+            LEFT JOIN combo_productos cp ON c.id = cp.combo_id
+            WHERE c.oculto = 0
+            GROUP BY c.nombre, c.precio
+        """)
+        
+        resultados = cursor.fetchall()
+        conexion.close()
+        return resultados
+        
+    except Exception as e:
+        print(f"Error al mostrar combos: {str(e)}")
+        raise e
 
 def ocultar_combo(nombre_combo):
     """Marca un combo como oculto en lugar de eliminarlo"""
@@ -646,25 +668,33 @@ def cargar_datos_combo(nombre_combo):
     try:
         conexion = conectar_db()
         cursor = conexion.cursor()
-
-        consulta = """
-            SELECT c.Nombre, p1.Nombre AS Producto1, p2.Nombre AS Producto2, c.Precio
+        
+        cursor.execute("""
+            SELECT c.nombre, GROUP_CONCAT(cp.producto_nombre) as productos, c.precio
             FROM combos c
-            JOIN producto p1 ON c.Producto1_ID = p1.ID_producto
-            JOIN producto p2 ON c.Producto2_ID = p2.ID_producto
-            WHERE c.Nombre = %s AND c.oculto = 0
-        """
+            LEFT JOIN combo_productos cp ON c.id = cp.combo_id
+            WHERE c.nombre = %s AND c.oculto = 0
+            GROUP BY c.nombre, c.precio
+        """, (nombre_combo,))
         
-        cursor.execute(consulta, (nombre_combo,))
-        combo = cursor.fetchone()
-        cursor.close()
+        resultado = cursor.fetchone()
+        if resultado:
+            nombre = resultado[0]
+            productos = resultado[1].split(',') if resultado[1] else []
+            precio = resultado[2]
+            
+            # Asegurar que tenemos al menos dos productos
+            producto1 = productos[0] if len(productos) > 0 else ""
+            producto2 = productos[1] if len(productos) > 1 else ""
+            
+            return (nombre, producto1, producto2, precio)
+            
         conexion.close()
-        
-        return combo
+        return None
         
     except Exception as e:
-        print(f"Error al cargar los datos del combo: {str(e)}")
-        return None
+        print(f"Error al cargar datos del combo: {str(e)}")
+        raise e
 
 def obtener_descuentos():
     """Obtiene solo los descuentos activos con información del producto"""

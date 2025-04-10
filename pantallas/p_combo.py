@@ -1,14 +1,16 @@
 import sys
+sys.path.append("c:/Users/Miriam/Desktop/cafesys")
 import p_inicio
 import main_p
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QLabel, QVBoxLayout, 
     QWidget, QPushButton, QComboBox, QMessageBox, 
-    QTableWidget, QHeaderView, QTableWidgetItem, QLineEdit, QTextEdit
+    QTableWidget, QHeaderView, QTableWidgetItem, QLineEdit, QTextEdit, QHBoxLayout
 )
 from PyQt6.QtGui import QPixmap
 from conexion import eliminar_combo, mostrar_combos, ocultar_combo
+from widgets.transfer_list import TransferList
 
 #####################################################
 class MainCombo(QMainWindow):
@@ -32,9 +34,9 @@ class MainCombo(QMainWindow):
         # Crear la tabla
         self.table_widget = QTableWidget(self)
         self.table_widget.setGeometry(160, 145, 650, 555)
-        self.table_widget.setColumnCount(4)
+        self.table_widget.setColumnCount(3)  # Cambiar a 3 columnas
         self.table_widget.setHorizontalHeaderLabels([
-            "Nombre", "Producto 1", "Producto 2", "Precio"
+            "Nombre", "Productos", "Precio"  # Cambiar headers
         ])
 
         # Estilo de la tabla
@@ -60,7 +62,7 @@ class MainCombo(QMainWindow):
 
         # Ajustar ancho de columnas
         header = self.table_widget.horizontalHeader()
-        for i in range(4):
+        for i in range(3):
             header.setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
 
         self.cargar_datos()
@@ -101,7 +103,6 @@ class MainCombo(QMainWindow):
             from conexion import mostrar_combos
             combos = mostrar_combos()
             
-            # Debug para ver qué datos estamos recibiendo
             print("Datos recibidos de mostrar_combos:", combos)
             
             if not combos:
@@ -112,16 +113,22 @@ class MainCombo(QMainWindow):
         
             for fila, combo in enumerate(combos):
                 try:
-                    # Asegurarse de que cada columna tenga datos válidos
                     nombre = str(combo[0]) if combo[0] is not None else ""
-                    producto1 = str(combo[1]) if combo[1] is not None else ""
-                    producto2 = str(combo[2]) if combo[2] is not None else ""
-                    precio = f"${str(combo[3])}" if combo[3] is not None else "$0.00"
+                    productos = ", ".join([str(p) for p in combo[1].split(",")] if combo[1] is not None else [])
+                    precio = f"${str(combo[2])}" if combo[2] is not None else "$0.00"
                     
                     self.table_widget.setItem(fila, 0, QTableWidgetItem(nombre))
-                    self.table_widget.setItem(fila, 1, QTableWidgetItem(producto1))
-                    self.table_widget.setItem(fila, 2, QTableWidgetItem(producto2))
-                    self.table_widget.setItem(fila, 3, QTableWidgetItem(precio))
+                    
+                    # Crear un item para los productos con saltos de línea
+                    productos_item = QTableWidgetItem(productos)
+                    productos_item.setTextAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+                    self.table_widget.setItem(fila, 1, productos_item)
+                    
+                    self.table_widget.setItem(fila, 2, QTableWidgetItem(precio))
+                    
+                    # Ajustar altura de la fila según el contenido
+                    self.table_widget.resizeRowToContents(fila)
+                    
                 except IndexError as e:
                     print(f"Error en el índice del combo {fila}: {e}")
                     print(f"Datos del combo: {combo}")
@@ -129,6 +136,12 @@ class MainCombo(QMainWindow):
         except Exception as e:
             print(f"Error detallado al cargar los combos: {str(e)}")
             QMessageBox.critical(self, "Error", f"Error al cargar los combos: {str(e)}")
+
+        # Ajustar ancho de columnas después de cargar los datos
+        header = self.table_widget.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # Nombre
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)           # Productos
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # Precio
 
     def actualizar_tabla(self):
         """Actualiza los datos de la tabla"""
@@ -162,57 +175,86 @@ class AgregarCombo(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Agregar combo")
-        self.setFixedSize(400, 500)
+        self.setFixedSize(800, 600)
 
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
-
-        background_label = QLabel(central_widget)
-        pixmap = QPixmap('imagenes/addcombo.png')
-        background_label.setPixmap(pixmap)
-        background_label.setScaledContents(True)
-        central_layout = QVBoxLayout(central_widget)
-        central_layout.addWidget(background_label)
+        layout = QVBoxLayout(central_widget)
 
         # Campos de entrada
-        self.nombre_combo = QLineEdit(self)
+        input_widget = QWidget()
+        input_layout = QHBoxLayout()
+        
+        self.nombre_combo = QLineEdit()
         self.nombre_combo.setPlaceholderText("Nombre del combo")
-        self.nombre_combo.setFixedSize(321, 38)
-        self.nombre_combo.move(30, 120)
         self.nombre_combo.setStyleSheet(self.estilo_line_edit())
         
-        self.precio_combo = QLineEdit(self)
+        self.precio_combo = QLineEdit()
         self.precio_combo.setPlaceholderText("Precio del combo")
-        self.precio_combo.setFixedSize(321, 38)
-        self.precio_combo.move(30, 180)
         self.precio_combo.setStyleSheet(self.estilo_line_edit())
+        
+        input_layout.addWidget(self.nombre_combo)
+        input_layout.addWidget(self.precio_combo)
+        input_widget.setLayout(input_layout)
+        layout.addWidget(input_widget)
 
-        # ComboBox para productos
-        self.producto1_combo = QComboBox(self)
-        self.producto1_combo.setFixedSize(321, 38)
-        self.producto1_combo.move(30, 230)
-        self.producto1_combo.setStyleSheet(self.estilo_combo_box())
-
-        self.producto2_combo = QComboBox(self)
-        self.producto2_combo.setFixedSize(321, 38)
-        self.producto2_combo.move(30, 280)
-        self.producto2_combo.setStyleSheet(self.estilo_combo_box())
-
+        # Transfer List
+        self.transfer_list = TransferList("Productos Disponibles", "Productos en Combo")
+        layout.addWidget(self.transfer_list)
+        
+        # Cargar productos disponibles
         self.cargar_productos()
 
         # Botones
-        button_configs = [
-            ["Confirmar", 73, 403, 100, 60],
-            ["Regresar", 227, 403, 100, 60],
-        ]
-        self.buttons = []
-        for name, x, y, width, height in button_configs:
-            button = QPushButton(name, self)
-            button.setFixedSize(width, height)
-            button.move(x, y)
-            button.setStyleSheet(self.estilo_boton())
-            self.buttons.append(button)
-            button.clicked.connect(self.button_clicked)
+        button_widget = QWidget()
+        button_layout = QHBoxLayout()
+        
+        confirmar_btn = QPushButton("Confirmar")
+        cancelar_btn = QPushButton("Cancelar")
+        
+        confirmar_btn.setStyleSheet(self.estilo_boton())
+        cancelar_btn.setStyleSheet(self.estilo_boton())
+        
+        button_layout.addWidget(confirmar_btn)
+        button_layout.addWidget(cancelar_btn)
+        button_widget.setLayout(button_layout)
+        layout.addWidget(button_widget)
+
+        confirmar_btn.clicked.connect(self.confirmar_combo)
+        cancelar_btn.clicked.connect(self.close)
+
+    def cargar_productos(self):
+        try:
+            from conexion import mostrar_productos
+            productos = mostrar_productos()
+            nombres_productos = [producto[1] for producto in productos]
+            self.transfer_list.set_available_items(nombres_productos)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar productos: {str(e)}")
+
+    def confirmar_combo(self):
+        nombre_combo = self.nombre_combo.text()
+        productos_seleccionados = self.transfer_list.get_selected_items()
+        
+        try:
+            precio_combo = float(self.precio_combo.text())
+        except ValueError:
+            QMessageBox.warning(self, "Advertencia", "Por favor ingrese un precio válido.")
+            return
+
+        if not nombre_combo or len(productos_seleccionados) < 2:
+            QMessageBox.warning(self, "Advertencia", 
+                              "Por favor ingrese un nombre válido y seleccione al menos dos productos.")
+            return
+
+        try:
+            from conexion import agregar_combo_multiple
+            agregar_combo_multiple(nombre_combo, productos_seleccionados, precio_combo)
+            QMessageBox.information(self, "Éxito", "Combo agregado correctamente.")
+            self.combo_agregado.emit()
+            self.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al agregar combo: {str(e)}")
 
     def estilo_line_edit(self):
         return """
@@ -226,84 +268,22 @@ class AgregarCombo(QMainWindow):
             }
         """
 
-    def estilo_combo_box(self):
-        return """
-            QComboBox {
-                border: 1px solid #E6AA68;
-                border-radius: 10px;
-                padding: 5px;
-                font-size: 14px;
-                background-color: #111A2D;
-                color: #E6AA68;
-            }
-            QComboBox::drop-down { border: none; }
-            QComboBox::down-arrow { image: none; }
-            QComboBox QAbstractItemView {
-                background-color: #111A2D;
-                color: #E6AA68;
-                selection-background-color: #E6AA68;
-                selection-color: #111A2D;
-            }
-        """
-
     def estilo_boton(self):
         return """
             QPushButton {
-                background-color: rgba(255, 255, 255, 0);
-                border: 0px solid white;
+                background-color: #E6AA68;
                 border-radius: 10px;
-                color: transparent;
+                padding: 8px;
+                color: #111A2D;
+                font-weight: bold;
             }
             QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0);
+                background-color: #D69958;
             }
             QPushButton:pressed {
-                background-color: rgba(230, 170, 104, 80);
+                background-color: #C68948;
             }
         """
-
-    def cargar_productos(self):
-        try:
-            from conexion import mostrar_productos
-            productos = mostrar_productos()
-            for producto in productos:
-                self.producto1_combo.addItem(producto[1])
-                self.producto2_combo.addItem(producto[1])
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error al cargar productos: {str(e)}")
-
-    def button_clicked(self):
-        button = self.sender()
-        if button.text() == "Regresar":
-            self.main_window = MainCombo()
-            self.main_window.show()
-            self.close()
-        elif button.text() == "Confirmar":
-            self.confirmar_combo()
-
-    def confirmar_combo(self):
-        nombre_combo = self.nombre_combo.text()
-        producto1 = self.producto1_combo.currentText()
-        producto2 = self.producto2_combo.currentText()
-        
-        try:
-            precio_combo = float(self.precio_combo.text())
-        except ValueError:
-            QMessageBox.warning(self, "Advertencia", "Por favor ingrese un precio válido.")
-            return
-
-        if not nombre_combo or producto1 == producto2:
-            QMessageBox.warning(self, "Advertencia", "Por favor ingrese un nombre válido y seleccione productos distintos.")
-            return
-
-        try:
-            from conexion import agregar_combo
-            agregar_combo(nombre_combo, producto1, producto2, precio_combo)
-            QMessageBox.information(self, "Éxito", "Combo agregado correctamente.")
-            self.combo_agregado.emit()
-            self.close()
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error al agregar combo: {str(e)}")
 
 
 ###########################################################################################

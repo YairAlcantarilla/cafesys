@@ -143,19 +143,24 @@ class CajaI(QMainWindow):
                 QMessageBox.warning(self, "Aviso", "Primero debe ingresar el pago")
                 return
             
-            if self.efectivo_recibido < sum(producto['precio'] for producto in self.productos_temporales):
-                QMessageBox.warning(self, "Error", "El efectivo recibido es insuficiente")
-                return
-
             try:
-                self.guardar_venta(forma_pago='Efectivo')
-                total = self.generar_ticket()
+                # Convert all values to float consistently
+                total = sum(float(str(producto['precio'])) for producto in self.productos_temporales)
+                efectivo = float(self.efectivo_recibido)
                 
-                if total > 0:
+                if efectivo < total:
+                    QMessageBox.warning(self, "Error", "El efectivo recibido es insuficiente")
+                    return
+
+                self.guardar_venta(forma_pago='Efectivo')
+                total_venta = self.generar_ticket()
+                
+                if total_venta > 0:
+                    cambio = float(self.cambio_calculado)
                     QMessageBox.information(self, "Éxito", 
-                        f"Venta confirmada\nTotal: ${total:.2f}\n"
-                        f"Efectivo: ${self.efectivo_recibido:.2f}\n"
-                        f"Cambio: ${self.cambio_calculado:.2f}\n"
+                        f"Venta confirmada\nTotal: ${total_venta:.2f}\n"
+                        f"Efectivo: ${efectivo:.2f}\n"
+                        f"Cambio: ${cambio:.2f}\n"
                         "Ticket generado correctamente")
                 
                     self.limpiar_tabla()
@@ -277,7 +282,8 @@ class CajaI(QMainWindow):
                 QMessageBox.warning(self, "Aviso", "No hay productos para generar ticket")
                 return 0.0
 
-            total_venta = sum(producto['precio'] for producto in self.productos_temporales)
+            # Convertir todos los precios a float antes de sumar
+            total_venta = sum(float(str(producto['precio'])) for producto in self.productos_temporales)
             total_articulos = sum(producto['cantidad'] for producto in self.productos_temporales)
             
             nombre_cliente = self.inputs[0].text() or "Cliente General"
@@ -296,8 +302,8 @@ class CajaI(QMainWindow):
             for producto in self.productos_temporales:
                 nombre = producto['producto'][:15].ljust(15)
                 cantidad = str(producto['cantidad']).center(8)
-                precio_unit = f"${producto['precio']/producto['cantidad']:.2f}".rjust(8)
-                total = f"${producto['precio']:.2f}".rjust(8)
+                precio_unit = f"${float(str(producto['precio']))/producto['cantidad']:.2f}".rjust(8)
+                total = f"${float(str(producto['precio'])):.2f}".rjust(8)
                 ticket_text.append(f"{nombre}{cantidad}{precio_unit}{total}")
 
             ticket_text.extend([
@@ -305,8 +311,8 @@ class CajaI(QMainWindow):
                 f"Total Artículos: {total_articulos}",
                 f"Total a Pagar: ${total_venta:.2f}",
                 "-" * 40,
-                f"Efectivo Recibido: ${self.efectivo_recibido:.2f}",
-                f"Cambio: ${self.cambio_calculado:.2f}",
+                f"Efectivo Recibido: ${float(self.efectivo_recibido):.2f}",
+                f"Cambio: ${float(self.cambio_calculado):.2f}",
                 "=" * 40,
                 "¡Gracias por su compra!",
                 "=" * 40
@@ -392,7 +398,12 @@ class PagoEfectivoWindow(QDialog):
         layout.setSpacing(15)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        self.total_a_pagar = float(sum(producto['precio'] for producto in parent.productos_temporales))
+        # Calcular total a pagar manejando Decimal
+        try:
+            self.total_a_pagar = float(sum(float(str(producto['precio'])) for producto in parent.productos_temporales))
+        except (ValueError, TypeError, KeyError) as e:
+            QMessageBox.critical(self, "Error", f"Error al calcular el total: {str(e)}")
+            self.total_a_pagar = 0.0
 
         # Campo de total a pagar (no editable)
         layout.addWidget(QLabel("Total a Pagar:"))
@@ -768,20 +779,28 @@ class VentanaCombos(QMainWindow):
 
     def cargar_combos(self):
         try:
+            # Inicializar el diccionario de combos
+            self.combos_info = {}
+            
             combos = conexion.mostrar_combos()
             if combos:
-                # Extraer solo los nombres de los combos
-                nombres_combos = [combo[0] for combo in combos]
-                self.combo_combo.addItems(nombres_combos)
+                nombres_combos = []
+                for combo in combos:
+                    nombre = combo[0]
+                    productos = combo[1].split(',') if combo[1] else []
+                    precio = combo[2]
+                    
+                    # Guardar la información del combo
+                    self.combos_info[nombre] = {
+                        'productos': productos,
+                        'precio': precio
+                    }
+                    nombres_combos.append(nombre)
                 
-                # Almacenar la información completa de los combos
-                self.combos_info = {combo[0]: {'producto1': combo[1], 
-                                             'producto2': combo[2], 
-                                             'precio': combo[3]} 
-                                  for combo in combos}
+                self.combo_combo.addItems(nombres_combos)
             else:
                 QMessageBox.warning(self, "Aviso", "No hay combos disponibles")
-                
+                    
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al cargar combos: {str(e)}")
 
@@ -795,8 +814,15 @@ class VentanaCombos(QMainWindow):
             fecha_actual = QDate.currentDate().toString("yyyy-MM-dd")
             
             # Agregar el combo como un producto
-            self.parent().agregar_producto_temporal(combo_nombre, fecha_actual, cantidad, precio_total)
+            self.parent().agregar_producto_temporal(
+                combo_nombre, 
+                fecha_actual, 
+                cantidad, 
+                float(precio_total)  # Convertir Decimal a float
+            )
             self.close()
+        else:
+            QMessageBox.warning(self, "Error", "Por favor seleccione un combo válido")
 
 #########################################################################################################
 class CajaFinal(QMainWindow):

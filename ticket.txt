@@ -1,18 +1,20 @@
 ========================================
 CAFETERÍA SISTEMA
 ========================================
-Fecha: 07/04/2025
-Cliente: La Grasa
+Fecha: 10/04/2025
+Cliente: Cliente General
 ----------------------------------------
 PRODUCTO          CANT    PRECIO    TOTAL
 ----------------------------------------
-Combo grasoso :   99   $9999.00$989901.00
+Capuccino         1      $30.00  $30.00
+Pastel            1      $40.00  $40.00
+Combo Mañanero    1     $120.00 $120.00
 ----------------------------------------
-Total Artículos: 99
-Total a Pagar: $989901.00
+Total Artículos: 3
+Total a Pagar: $190.00
 ----------------------------------------
-Efectivo Recibido: $1000000.00
-Cambio: $10099.00
+Efectivo Recibido: $199.00
+Cambio: $9.00
 ========================================
 ¡Gracias por su compra!
 ========================================
