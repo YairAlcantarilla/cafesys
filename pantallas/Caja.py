@@ -60,7 +60,8 @@ class CajaI(QMainWindow):
             ["PEfectivo", 914, 443, 77, 75],
             ["PTarjeta", 1015, 443, 77, 75],
             ["Ayuda", 1210, 25, 50, 50],
-            ["Confirmar", 842, 638, 94, 94],  
+            ["Confirmar", 842, 638, 94, 94],
+            ["Borrar", 942, 638, 94, 94],  # Nuevo botón Borrar
         ]
         self.buttons = []
         for name, x, y, width, height in button_configs:
@@ -81,6 +82,23 @@ class CajaI(QMainWindow):
                 background-color: rgba(230, 170, 104, 80);
             }
         """)
+            # Agregar estilo específico para el botón Borrar
+            if button.text() == "Borrar":
+                button.setStyleSheet("""
+                    QPushButton {
+                        background-color: transparent;
+                        border: 0px solid #E6AA68;
+                        border-radius: 16px;
+                        color: transparent;
+                        font-size: 12px;
+                    }
+                    QPushButton:hover {
+                        background-color: rgba(230, 170, 104, 0.2);
+                    }
+                    QPushButton:pressed {
+                        background-color: rgba(230, 170, 104, 0.4);
+                    }
+                """)
             self.buttons.append(button)
         for button in self.buttons:
             button.clicked.connect(self.button_clicked)
@@ -116,6 +134,10 @@ class CajaI(QMainWindow):
         for column in range(4): 
             header.setSectionResizeMode(column, QHeaderView.ResizeMode.Stretch)
 
+        # Configurar selección de filas
+        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+
         # Añadir el visor de imágenes
         self.caja_imagenes = CajaImagenes(self)
         
@@ -126,6 +148,9 @@ class CajaI(QMainWindow):
 
     def button_clicked(self):
         button = self.sender()
+        if button.text() == "Borrar":
+            self.borrar_producto()
+            return
         if button.text() == "PEfectivo":
 
             if not self.productos_temporales:
@@ -326,6 +351,30 @@ class CajaI(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al generar ticket: {str(e)}")
             return 0.0
+
+    def borrar_producto(self):
+        """Borra el producto seleccionado de la tabla y de la lista temporal"""
+        filas_seleccionadas = self.table.selectedIndexes()
+        if not filas_seleccionadas:
+            QMessageBox.warning(self, "Aviso", "Por favor seleccione un producto para borrar")
+            return
+
+        # Obtener índices únicos de las filas seleccionadas
+        filas_unicas = set(index.row() for index in filas_seleccionadas)
+        
+        # Confirmar la eliminación
+        respuesta = QMessageBox.question(
+            self,
+            "Confirmar eliminación",
+            f"¿Está seguro de eliminar {len(filas_unicas)} producto(s)?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if respuesta == QMessageBox.StandardButton.Yes:
+            # Borrar desde el último índice para no afectar los índices anteriores
+            for fila in sorted(filas_unicas, reverse=True):
+                del self.productos_temporales[fila]
+                self.table.removeRow(fila)
 
 ###############################################################################################
 class CajaImagenes(QGraphicsView):
