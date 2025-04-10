@@ -74,8 +74,7 @@ def mostrar_productos(ocultar_especiales=True):
             query = """
                 SELECT * FROM Producto 
                 WHERE oculto = 0
-                AND Nombre NOT LIKE '%Comida%' 
-                AND Nombre NOT LIKE '%Bebida%'
+                AND es_cate = 0
                 ORDER BY Nombre
             """
         else:
@@ -97,10 +96,15 @@ def mostrar_productos(ocultar_especiales=True):
 
 def obtener_categorias():
     try:
-        conexion = conectar_db() 
+        conexion = conectar_db()
         if conexion:
             cursor = conexion.cursor()
-            cursor.execute("SELECT DISTINCT Categoria FROM Producto")
+            cursor.execute("""
+                SELECT Nombre 
+                FROM Producto 
+                WHERE es_cate = 1
+                ORDER BY Nombre
+            """)
             categorias = cursor.fetchall()
             conexion.close()
             return categorias
@@ -839,3 +843,108 @@ def actualizar_usuario(id_usuario, datos_actualizados):
             return True
     except Exception as e:
         raise Exception(f"Error al actualizar usuario: {str(e)}")
+
+def obtener_descuento_activo(producto_id):
+    """Obtiene el descuento activo para un producto específico"""
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        
+        cursor.execute("""
+            SELECT d.Porcentaje, d.Precio_final
+            FROM descuentos d
+            WHERE d.Producto_ID = %s
+            AND d.oculto = 0
+            ORDER BY d.ID_descuento DESC
+            LIMIT 1
+        """, (producto_id,))
+        
+        descuento = cursor.fetchone()
+        cursor.close()
+        conexion.close()
+        return descuento
+    except Exception as e:
+        print(f"Error al obtener descuento activo: {e}")
+        return None
+
+def obtener_producto_id(nombre_producto):
+    """Obtiene el ID de un producto por su nombre"""
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        
+        cursor.execute("SELECT ID_producto FROM Producto WHERE Nombre = %s", (nombre_producto,))
+        resultado = cursor.fetchone()
+        
+        cursor.close()
+        conexion.close()
+        return resultado[0] if resultado else None
+    except Exception as e:
+        print(f"Error al obtener ID del producto: {e}")
+        return None
+
+def agregar_categoria(nombre):
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        
+        # Obtener siguiente ID disponible
+        cursor.execute("SELECT MAX(ID_Producto) FROM Producto")
+        next_id = cursor.fetchone()[0]
+        next_id = 1 if next_id is None else next_id + 1
+        
+        # Insertar la categoría como un producto especial
+        # Cambiamos 'Categoria' por el nombre de la categoría
+        sql = """
+            INSERT INTO Producto (ID_Producto, Nombre, Precio, Cantidad, Categoria, oculto, es_cate) 
+            VALUES (%s, %s, 0, 0, %s, 1, 1)
+        """
+        cursor.execute(sql, (next_id, nombre, nombre))  # Usamos el nombre también como categoría
+        conexion.commit()
+        conexion.close()
+    except Exception as e:
+        raise Exception(f"Error al agregar categoría: {str(e)}")
+
+def editar_categoria(nombre_original, nuevo_nombre):
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        
+        # Actualizar el nombre de la categoría en la tabla Producto
+        cursor.execute(
+            "UPDATE Producto SET Nombre = %s WHERE Nombre = %s AND es_cate = 1",
+            (nuevo_nombre, nombre_original)
+        )
+        
+        # Actualizar las referencias a esta categoría en otros productos
+        cursor.execute(
+            "UPDATE Producto SET Categoria = %s WHERE Categoria = %s AND es_cate = 0",
+            (nuevo_nombre, nombre_original)
+        )
+        
+        conexion.commit()
+        conexion.close()
+    except Exception as e:
+        raise Exception(f"Error al editar categoría: {str(e)}")
+
+def eliminar_categoria(nombre):
+    try:
+        conexion = conectar_db()
+        cursor = conexion.cursor()
+        
+        # Actualizar productos que usan esta categoría
+        cursor.execute(
+            "UPDATE Producto SET Categoria = 'Sin categoría' WHERE Categoria = %s AND es_cate = 0",
+            (nombre,)
+        )
+        
+        # Eliminar la categoría
+        cursor.execute(
+            "DELETE FROM Producto WHERE Nombre = %s AND es_cate = 1",
+            (nombre,)
+        )
+        
+        conexion.commit()
+        conexion.close()
+    except Exception as e:
+        raise Exception(f"Error al eliminar categoría: {str(e)}")

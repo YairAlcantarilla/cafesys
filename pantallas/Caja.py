@@ -208,6 +208,30 @@ class CajaI(QMainWindow):
         self.table.setRowCount(0)
 
     def agregar_producto_temporal(self, producto, fecha, cantidad, precio_total):
+        # Verificar si hay descuento activo
+        producto_id = conexion.obtener_producto_id(producto)
+        if producto_id:
+            descuento = conexion.obtener_descuento_activo(producto_id)
+            
+            if descuento:
+                porcentaje, precio_final = descuento
+                # Calcular precio con descuento
+                precio_unitario = precio_total / cantidad
+                precio_con_descuento = precio_final * cantidad
+                
+                # Mostrar mensaje de descuento aplicado
+                QMessageBox.information(
+                    self,
+                    "Descuento Aplicado",
+                    f"¡Se aplicó un descuento del {porcentaje}%!\n"
+                    f"Precio original: ${precio_total:.2f}\n"
+                    f"Precio con descuento: ${precio_con_descuento:.2f}"
+                )
+                
+                # Actualizar precio total con descuento
+                precio_total = precio_con_descuento
+
+        # Agregar a la lista de productos temporales
         self.productos_temporales.append({
             'producto': producto,
             'fecha': fecha,
@@ -534,7 +558,6 @@ class VentanaBebidas(QMainWindow):
     def agregar_bebida(self):
         bebida = self.bebida_combo.currentText()
         
-        # Validar que no sea un nombre genérico
         if bebida == "Bebidas" or not bebida:
             QMessageBox.warning(self, "Error", "Por favor seleccione un producto")
             return
