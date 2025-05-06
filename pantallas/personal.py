@@ -304,7 +304,7 @@ class AgregarE(QMainWindow):
         self.admin_radio.setStyleSheet("""
             QRadioButton {
                 color: #E6AA68;
-                font-size: 14px;
+                font-size: 12px;
             }
             QRadioButton::indicator {
                 width: 15px;
@@ -324,7 +324,7 @@ class AgregarE(QMainWindow):
         self.cajero_radio.setStyleSheet("""
             QRadioButton {
                 color: #E6AA68;
-                font-size: 14px;
+                font-size: 12px;
             }
             QRadioButton::indicator {
                 width: 15px;
@@ -640,7 +640,7 @@ class EditarE(QMainWindow):
         self.admin_radio.setStyleSheet("""
             QRadioButton {
                 color: #E6AA68;
-                font-size: 14px;
+                font-size: 12px;
             }
             QRadioButton::indicator {
                 width: 15px;
@@ -659,7 +659,7 @@ class EditarE(QMainWindow):
         self.cajero_radio.setStyleSheet("""
             QRadioButton {
                 color: #E6AA68;
-                font-size: 14px;
+                font-size: 12px;
             }
             QRadioButton::indicator {
                 width: 15px;
