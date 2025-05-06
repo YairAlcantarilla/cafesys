@@ -105,10 +105,10 @@ class CajaI(QMainWindow):
 
         ######################  Tabla de contenido  ####################################################
         self.table = QTableWidget(self)
-        self.table.setGeometry(40, 125, 618, 605) 
-        self.table.setColumnCount(4) 
-        self.table.setHorizontalHeaderLabels(['Producto', 'Fecha', 'Cantidad', 'Precio'])  # Added 'Precio'
-        
+        self.table.setGeometry(40, 125, 618, 605)
+        self.table.setColumnCount(5)  # Aumentamos a 5 columnas
+        self.table.setHorizontalHeaderLabels(['Producto', 'Fecha', 'Cantidad', 'Precio', 'Acciones'])
+
         # Configurar el estilo de la tabla
         self.table.setStyleSheet("""
             QTableWidget {
@@ -131,8 +131,11 @@ class CajaI(QMainWindow):
 
         # Ajustar el ancho de las columnas
         header = self.table.horizontalHeader()
-        for column in range(4): 
+        for column in range(4):
             header.setSectionResizeMode(column, QHeaderView.ResizeMode.Stretch)
+        # Establecer un ancho fijo para la columna de acciones
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
+        self.table.setColumnWidth(4, 60)
 
         # Configurar selección de filas
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -143,6 +146,22 @@ class CajaI(QMainWindow):
         
         # Lista para almacenar datos temporales
         self.productos_temporales = []
+
+        # Después de configurar la tabla, añadir el label del total
+        self.total_label = QLabel("Total a pagar: $0.00", self)
+        self.total_label.setGeometry(710, 535, 408, 40)  # Ajusta la posición debajo de la tabla
+        self.total_label.setStyleSheet("""
+            QLabel {
+                background-color: #111A2D;
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                color: #E6AA68;
+                padding: 5px;
+                font-size: 16px;
+                font-weight: bold;
+                qproperty-alignment: AlignRight;
+            }
+        """)
 
     ######################  Tabla de contenido  ####################################################
 
@@ -236,6 +255,9 @@ class CajaI(QMainWindow):
        
     def limpiar_tabla(self):
         self.table.setRowCount(0)
+        self.productos_temporales.clear()
+        # Resetear el total a cero
+        self.total_label.setText("Total a pagar: $0.00")
 
     def agregar_producto_temporal(self, producto, fecha, cantidad, precio_total):
         # Verificar si hay descuento activo
@@ -273,10 +295,52 @@ class CajaI(QMainWindow):
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
         
+        # Agregar los datos a las columnas
         self.table.setItem(row_position, 0, QTableWidgetItem(producto))
         self.table.setItem(row_position, 1, QTableWidgetItem(fecha))
         self.table.setItem(row_position, 2, QTableWidgetItem(str(cantidad)))
         self.table.setItem(row_position, 3, QTableWidgetItem(f"${precio_total:.2f}"))
+        
+        # Crear botón de eliminar
+        delete_button = QPushButton("❌")
+        delete_button.setStyleSheet("""
+            QPushButton {
+                background-color: #111A2D;
+                border: 1px solid #E6AA68;
+                border-radius: 5px;
+                color: #E6AA68;
+                padding: 2px;
+                max-width: 60px;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: rgba(230, 170, 104, 0.2);
+            }
+        """)
+        
+        # Conectar el botón con la función de eliminar
+        delete_button.clicked.connect(lambda: self.eliminar_fila(row_position))
+        
+        # Agregar el botón a la tabla
+        self.table.setCellWidget(row_position, 4, delete_button)
+        
+        # Actualizar el total
+        self.actualizar_total()
+
+    def eliminar_fila(self, row):
+        """Elimina una fila específica de la tabla y de la lista de productos temporales"""
+        respuesta = QMessageBox.question(
+            self,
+            "Confirmar eliminación",
+            "¿Está seguro de eliminar este producto?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if respuesta == QMessageBox.StandardButton.Yes:
+            self.table.removeRow(row)
+            del self.productos_temporales[row]
+            # Actualizar el total después de eliminar
+            self.actualizar_total()
 
     def guardar_venta(self, forma_pago='Efectivo', id_usuario=None):
         try:
@@ -315,7 +379,7 @@ class CajaI(QMainWindow):
 
             ticket_text = [
                 "=" * 40,
-                "CAFETERÍA SISTEMA",
+                "CAFESYS",
                 "=" * 40,
                 f"Fecha: {QDate.currentDate().toString('dd/MM/yyyy')}",
                 f"Cliente: {nombre_cliente}",
@@ -375,6 +439,11 @@ class CajaI(QMainWindow):
             for fila in sorted(filas_unicas, reverse=True):
                 del self.productos_temporales[fila]
                 self.table.removeRow(fila)
+
+    def actualizar_total(self):
+        """Actualiza el total a pagar en el label"""
+        total = sum(float(producto['precio']) for producto in self.productos_temporales)
+        self.total_label.setText(f"Total a pagar: ${total:.2f}")
 
 ###############################################################################################
 class CajaImagenes(QGraphicsView):

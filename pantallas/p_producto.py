@@ -77,7 +77,10 @@ class MainWindow(QMainWindow):
             ["Agregar Producto", 875, 144, 343, 55],
             ["Eliminar", 875, 225, 343, 55],
             ["Editar", 875, 306, 343, 55],
-            ["Recargar", 875, 387, 343, 55],  # Nuevo botón de recarga
+            ["Recargar", 875, 387, 343, 55],
+            ["Agregar Categoría", 875, 448, 343, 55],
+            ["Editar Categoría", 875, 535, 343, 55],
+            ["Eliminar Categoría", 875, 610, 343, 55],
             ["Regresar", 1270, 655, 77, 70],
         ]
 
@@ -91,15 +94,15 @@ class MainWindow(QMainWindow):
                     background-color: rgba(255, 255, 255, 0);
                     border: 0px solid white;
                     border-radius: 10px;
-                    color:  rgba(255, 255, 255, 0);
-            }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0);
-            }
-            QPushButton:pressed {
-                background-color: rgba(230, 170, 104, 80);
-            }
-        """)
+                    color: transparent;
+                }
+                QPushButton:hover {
+                    background-color: rgba(255, 255, 255, 0);
+                }
+                QPushButton:pressed {
+                    background-color: rgba(230, 170, 104, 80);
+                }
+            """)
             self.buttons.append(button)
         
         for button in self.buttons:
@@ -143,9 +146,21 @@ class MainWindow(QMainWindow):
             self.dialog = EditarProducto()
             self.dialog.producto_editado.connect(self.cargar_datos)  # Nueva conexión
             self.dialog.show()
-        elif button.text() == "Recargar":  # Nuevo handler
+        elif button.text() == "Recargar":
             self.cargar_datos()
             QMessageBox.information(self, "Éxito", "Datos actualizados correctamente")
+        elif button.text() == "Agregar Categoría":
+            self.dialog = AgregarCategoria()
+            self.dialog.categoria_agregada.connect(self.cargar_datos)
+            self.dialog.show()
+        elif button.text() == "Editar Categoría":
+            self.dialog = EditarCategoria()
+            self.dialog.categoria_editada.connect(self.cargar_datos)
+            self.dialog.show()
+        elif button.text() == "Eliminar Categoría":
+            self.dialog = EliminarCategoria()
+            self.dialog.categoria_eliminada.connect(self.cargar_datos)
+            self.dialog.show()
         elif button.text() == "Lista":
             self.main_window = ListaProducto()
             self.main_window.show()
@@ -658,10 +673,10 @@ class EditarProducto(QMainWindow):
                     
                     self.inputs[0].setText(str(producto[1]))     # Nombre
                     self.inputs[1].setText(str(producto[2]))     # Precio
-                    self.inputs[2].setText(str(producto[4]))     # Stock/Cantidad
+                    self.inputs[2].setText(str(producto[4]))     # Stock/Cantidad - keeping this as requested
                     
-                    # Seleccionar la categoría correcta
-                    categoria = str(producto[4])
+                    # Fix to correctly select the category in dropdown
+                    categoria = str(producto[3])                 # Get category from producto[3]
                     index = self.categoria_combo.findText(categoria)
                     if index >= 0:
                         self.categoria_combo.setCurrentIndex(index)
@@ -716,6 +731,339 @@ class EditarProducto(QMainWindow):
             self.close()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo actualizar el producto:\n{str(e)}")
+
+##############################################################################    
+class AgregarCategoria(QMainWindow):
+    categoria_agregada = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+
+        # Fondo
+        background_label = QLabel(central_widget)
+        pixmap = QPixmap('imagenes/PAP.png')  # Puede usar la misma imagen de fondo
+        background_label.setPixmap(pixmap)
+        background_label.setScaledContents(True)
+        central_layout = QVBoxLayout(central_widget)
+        central_layout.addWidget(background_label)
+    
+        self.setWindowTitle("Agregar Categoría")
+        self.setFixedSize(400, 300)
+        self.setStyleSheet("background-color: #111A2D;")
+
+        # Crear label
+        label = QLabel("Nombre de Categoría:", self)
+        label.setStyleSheet("color: #E6AA68; font-size: 14px;")
+        label.move(30, 152)
+
+        # Crear input
+        self.input = QLineEdit(self)
+        self.input.setFixedSize(200, 30)
+        self.input.move(160, 150)
+        self.input.setStyleSheet("""
+            QLineEdit {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                font-size: 14px;
+                background-color: #111A2D;
+                color: #E6AA68;
+            }
+        """)
+
+        # Botones
+        button_configs = [
+            ["Cancelar", 30, 220, 100, 30],
+            ["Guardar", 270, 220, 100, 30],
+        ]
+        
+        self.buttons = []
+        for name, x, y, width, height in button_configs:
+            button = QPushButton(name, self)
+            button.setFixedSize(width, height)
+            button.move(x, y)
+            button.setStyleSheet("""
+                QPushButton {
+                    background-color: #E6AA68;
+                    border-radius: 10px;
+                    color: #111A2D;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #D69958;
+                }
+                QPushButton:pressed {
+                    background-color: #C68948;
+                }
+            """)
+            self.buttons.append(button)
+            button.clicked.connect(self.button_clicked)
+
+    def button_clicked(self):
+        button = self.sender()
+        if button.text() == "Cancelar":
+            self.close()
+        elif button.text() == "Guardar":
+            if self.validar_datos():
+                self.guardar_categoria()
+
+    def validar_datos(self):
+        if not self.input.text():
+            QMessageBox.warning(self, "Advertencia", "Por favor ingrese un nombre para la categoría")
+            return False
+        return True
+
+    def guardar_categoria(self):
+        try:
+            from conexion import agregar_categoria
+            agregar_categoria(self.input.text())
+            QMessageBox.information(self, "Éxito", "Categoría agregada correctamente")
+            self.categoria_agregada.emit()
+            self.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo agregar la categoría:\n{str(e)}")
+
+##############################################################################
+class EditarCategoria(QMainWindow):
+    categoria_editada = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+
+        # Fondo
+        background_label = QLabel(central_widget)
+        pixmap = QPixmap('imagenes/EDITP.png')  # Usamos la misma imagen de editar producto
+        background_label.setPixmap(pixmap)
+        background_label.setScaledContents(True)
+        central_layout = QVBoxLayout(central_widget)
+        central_layout.addWidget(background_label)
+    
+        self.setWindowTitle("Editar Categoría")
+        self.setFixedSize(400, 350)
+        self.setStyleSheet("background-color: #111A2D;")
+
+        # Crear labels
+        labels = ["Categoría:", "Nuevo Nombre:"]
+        for i, text in enumerate(labels):
+            label = QLabel(text, self)
+            label.setStyleSheet("color: #E6AA68; font-size: 14px;")
+            label.move(30, 130 + i * 60)
+
+        # Crear ComboBox para categorías
+        self.categoria_combo = QComboBox(self)
+        self.categoria_combo.setFixedSize(200, 30)
+        self.categoria_combo.move(160, 130)
+        self.categoria_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                font-size: 14px;
+                background-color: #111A2D;
+                color: #E6AA68;
+            }
+            QComboBox::drop-down { border: none; }
+            QComboBox::down-arrow { image: none; }
+            QComboBox QAbstractItemView {
+                background-color: #111A2D;
+                color: #E6AA68;
+                selection-background-color: #E6AA68;
+                selection-color: #111A2D;
+            }
+        """)
+        self.cargar_categorias()
+
+        # Crear input para nuevo nombre
+        self.input = QLineEdit(self)
+        self.input.setFixedSize(200, 30)
+        self.input.move(160, 190)
+        self.input.setStyleSheet("""
+            QLineEdit {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                font-size: 14px;
+                background-color: #111A2D;
+                color: #E6AA68;
+            }
+        """)
+
+        # Botones
+        button_configs = [
+            ["Cancelar", 30, 270, 100, 30],
+            ["Guardar", 270, 270, 100, 30],
+        ]
+        
+        self.buttons = []
+        for name, x, y, width, height in button_configs:
+            button = QPushButton(name, self)
+            button.setFixedSize(width, height)
+            button.move(x, y)
+            button.setStyleSheet("""
+                QPushButton {
+                    background-color: #E6AA68;
+                    border-radius: 10px;
+                    color: #111A2D;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #D69958;
+                }
+                QPushButton:pressed {
+                    background-color: #C68948;
+                }
+            """)
+            self.buttons.append(button)
+            button.clicked.connect(self.button_clicked)
+
+    def cargar_categorias(self):
+        try:
+            from conexion import obtener_categorias
+            categorias = obtener_categorias()
+            self.categoria_combo.addItem("Seleccionar categoría")
+            for categoria in categorias:
+                self.categoria_combo.addItem(categoria[0])
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar categorías: {str(e)}")
+
+    def button_clicked(self):
+        button = self.sender()
+        if button.text() == "Cancelar":
+            self.close()
+        elif button.text() == "Guardar":
+            if self.validar_datos():
+                self.guardar_cambios()
+
+    def validar_datos(self):
+        if self.categoria_combo.currentText() == "Seleccionar categoría":
+            QMessageBox.warning(self, "Advertencia", "Por favor seleccione una categoría")
+            return False
+        if not self.input.text():
+            QMessageBox.warning(self, "Advertencia", "Por favor ingrese un nuevo nombre para la categoría")
+            return False
+        return True
+
+    def guardar_cambios(self):
+        try:
+            from conexion import editar_categoria
+            editar_categoria(self.categoria_combo.currentText(), self.input.text())
+            QMessageBox.information(self, "Éxito", "Categoría actualizada correctamente")
+            self.categoria_editada.emit()
+            self.close()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo actualizar la categoría:\n{str(e)}")
+
+##############################################################################
+class EliminarCategoria(QMainWindow):
+    categoria_eliminada = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+
+        # Fondo
+        background_label = QLabel(central_widget)
+        pixmap = QPixmap('imagenes/ELIMP.png')  # Usamos la misma imagen de eliminar producto
+        background_label.setPixmap(pixmap)
+        background_label.setScaledContents(True)
+        central_layout = QVBoxLayout(central_widget)
+        central_layout.addWidget(background_label)
+    
+        self.setWindowTitle("Eliminar Categoría")
+        self.setFixedSize(400, 300)
+        self.setStyleSheet("background-color: #000928;")
+
+        # Crear label
+        label = QLabel("Categoría:", self)
+        label.setStyleSheet("color: #E6AA68; font-size: 14px;")
+        label.move(30, 152)
+
+        # Crear ComboBox para categorías
+        self.categoria_combo = QComboBox(self)
+        self.categoria_combo.setFixedSize(200, 30)
+        self.categoria_combo.move(160, 150)
+        self.categoria_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #E6AA68;
+                border-radius: 10px;
+                padding: 5px;
+                font-size: 14px;
+                background-color: #111A2D;
+                color: #E6AA68;
+            }
+            QComboBox::drop-down { border: none; }
+            QComboBox::down-arrow { image: none; }
+            QComboBox QAbstractItemView {
+                background-color: #111A2D;
+                color: #E6AA68;
+                selection-background-color: #E6AA68;
+                selection-color: #111A2D;
+            }
+        """)
+        self.cargar_categorias()
+
+        # Botones
+        button_configs = [
+            ["Cancelar", 30, 230, 100, 30],
+            ["Eliminar", 270, 230, 100, 30],
+        ]
+        
+        self.buttons = []
+        for name, x, y, width, height in button_configs:
+            button = QPushButton(name, self)
+            button.setFixedSize(width, height)
+            button.move(x, y)
+            button.setStyleSheet("""
+                QPushButton {
+                    background-color: #E6AA68;
+                    border-radius: 10px;
+                    color: #111A2D;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #D69958;
+                }
+                QPushButton:pressed {
+                    background-color: #C68948;
+                }
+            """)
+            self.buttons.append(button)
+            button.clicked.connect(self.button_clicked)
+
+    def cargar_categorias(self):
+        try:
+            from conexion import obtener_categorias
+            categorias = obtener_categorias()
+            self.categoria_combo.addItem("Seleccionar categoría")
+            for categoria in categorias:
+                self.categoria_combo.addItem(categoria[0])
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al cargar categorías: {str(e)}")
+
+    def button_clicked(self):
+        button = self.sender()
+        if button.text() == "Cancelar":
+            self.close()
+        elif button.text() == "Eliminar":
+            if self.categoria_combo.currentText() != "Seleccionar categoría":
+                try:
+                    from conexion import eliminar_categoria
+                    eliminar_categoria(self.categoria_combo.currentText())
+                    QMessageBox.information(self, "Éxito", "Categoría eliminada correctamente")
+                    self.categoria_eliminada.emit()
+                    self.close()
+                except Exception as e:
+                    QMessageBox.critical(self, "Error", f"No se pudo eliminar la categoría:\n{str(e)}")
+            else:
+                QMessageBox.warning(self, "Advertencia", "Por favor seleccione una categoría")
 
 ##############################################################################    
 

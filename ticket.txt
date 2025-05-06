@@ -1,18 +1,20 @@
 ========================================
-CAFETERÍA SISTEMA
+CAFESYS
 ========================================
-Fecha: 10/04/2025
+Fecha: 29/04/2025
 Cliente: Cliente General
 ----------------------------------------
 PRODUCTO          CANT    PRECIO    TOTAL
 ----------------------------------------
-Combo Mañanero    1     $120.00 $120.00
+Cafe Latte        8      $50.00 $400.00
+Panini            8      $85.00 $680.00
+Tartaleta de ki   8      $70.00 $560.00
 ----------------------------------------
-Total Artículos: 1
-Total a Pagar: $120.00
+Total Artículos: 24
+Total a Pagar: $1640.00
 ----------------------------------------
-Efectivo Recibido: $123.00
-Cambio: $3.00
+Efectivo Recibido: $2000.00
+Cambio: $360.00
 ========================================
 ¡Gracias por su compra!
 ========================================

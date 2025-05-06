@@ -11,6 +11,7 @@ from conexion import conectar_db
 from datetime import datetime, timedelta
 import json
 import os
+from win10toast import ToastNotifier
 
 class MainR(QMainWindow):
     def __init__(self):
@@ -200,6 +201,9 @@ class MainR(QMainWindow):
         self.intervalo_minimo = None
         self.load_configured_time()
 
+        # Crear el notificador
+        self.toaster = ToastNotifier()
+
     def load_configured_time(self):
         try:
             config_path = os.path.join(os.path.dirname(__file__), 'config.json')
@@ -242,14 +246,23 @@ class MainR(QMainWindow):
             self.ultimo_reporte = datetime.now()
             self.actualizar_intervalo()
             
-            # Mostrar notificación
-            QMessageBox.information(
-                self,
-                "Reporte Automático",
-                f"Se ha generado un reporte automático programado para las {self.configured_time}"
+            # Reemplazar QMessageBox con notificación de Windows
+            self.toaster.show_toast(
+                "CAFESYS - Reporte Automático",
+                f"Se ha generado un reporte automático programado para las {self.configured_time}",
+                icon_path="imagenes/CAFESYSNUEVO.png",
+                duration=5,
+                threaded=True
             )
         except Exception as e:
             print(f"Error generando reporte automático: {e}")
+            self.toaster.show_toast(
+                "CAFESYS - Error",
+                f"Error al generar reporte automático: {str(e)}",
+                icon_path="imagenes/CAFESYSNUEVO.png",
+                duration=5,
+                threaded=True
+            )
 
     def cargar_datos(self):
         try:
@@ -303,41 +316,34 @@ class MainR(QMainWindow):
             conexion = conectar_db()
             cursor = conexion.cursor()
             
-            # Obtener la fecha más reciente
-            cursor.execute("SELECT DISTINCT fecha FROM ventas ORDER BY fecha DESC LIMIT 1")
-            resultado = cursor.fetchone()
+            # Obtener la fecha actual
+            fecha_actual = datetime.now().date()
             
-            if not resultado:
-                QMessageBox.warning(self, "Aviso", "No hay ventas registradas para generar el reporte")
-                return
-                
-            fecha_reporte = resultado[0]
-            
-            # Obtener todas las ventas del día
+            # Obtener las ventas solo del día actual
             cursor.execute("""
                 SELECT producto, cantidad, precio_total, forma_pago 
                 FROM ventas 
-                WHERE fecha = %s
-            """, (fecha_reporte,))
+                WHERE DATE(fecha) = %s
+            """, (fecha_actual,))
             ventas = cursor.fetchall()
             
             if not ventas:
                 QMessageBox.warning(
                     self,
                     "Aviso",
-                    f"No hay ventas registradas para la fecha {fecha_reporte}"
+                    f"No hay ventas registradas para el día de hoy ({fecha_actual})"
                 )
                 return
             
             # Procesar datos para el reporte
-            total_ventas = sum(venta[1] for venta in ventas)  # Suma de cantidades
-            total_dinero = sum(venta[2] for venta in ventas)  # Suma de precio_total
-            metodos_pago = list(set(venta[3] for venta in ventas))  # Métodos de pago únicos
-            productos = [f"{venta[0]}(x{venta[1]})" for venta in ventas]  # Productos con cantidades
+            total_ventas = sum(venta[1] for venta in ventas)
+            total_dinero = sum(venta[2] for venta in ventas)
+            metodos_pago = list(set(venta[3] for venta in ventas))
+            productos = [f"{venta[0]}(x{venta[1]})" for venta in ventas]
             
             # Crear mensaje del reporte
             datos_reporte = (
-                f"El dia de hoy {fecha_reporte} se vendieron {total_ventas} productos "
+                f"El dia de hoy {fecha_actual} se vendieron {total_ventas} productos "
                 f"({', '.join(productos)}) con un costo total de ${total_dinero:.2f} "
                 f"usando los metodos de pago {', '.join(metodos_pago)}"
             )
@@ -346,7 +352,7 @@ class MainR(QMainWindow):
             cursor.execute("""
                 INSERT INTO reporte (TipoReporte, Periodo, datos)
                 VALUES (%s, %s, %s)
-            """, ('Venta', fecha_reporte, datos_reporte))
+            """, ('Venta', fecha_actual, datos_reporte))
             
             conexion.commit()
             cursor.close()
@@ -359,17 +365,22 @@ class MainR(QMainWindow):
             # Recargar la tabla
             self.cargar_datos()
             
-            QMessageBox.information(
-                self,
-                "Éxito",
-                "Reporte generado correctamente"
+            # Reemplazar QMessageBox con notificación de Windows
+            self.toaster.show_toast(
+                "CAFESYS - Reporte Generado",
+                "El reporte de ventas ha sido generado correctamente",
+                icon_path="imagenes/CAFESYSNUEVO.png",  # Ruta al ícono de tu app
+                duration=5,  # Duración en segundos
+                threaded=True  # Permite que la app siga funcionando durante la notificación
             )
             
         except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Error",
-                f"Error al generar reporte: {str(e)}"
+            self.toaster.show_toast(
+                "CAFESYS - Error",
+                f"Error al generar reporte: {str(e)}",
+                icon_path="imagenes/CAFESYSNUEVO.png",
+                duration=5,
+                threaded=True
             )
 
     def mostrar_ventas(self):
@@ -530,13 +541,16 @@ class VentasWindow(QDialog):
             conexion = conectar_db()
             cursor = conexion.cursor()
             
+            fecha_actual = datetime.now().date()
+            
             consulta = """
                 SELECT id_venta, producto, fecha, cantidad, 
                        precio_total, forma_pago 
                 FROM ventas 
+                WHERE DATE(fecha) = %s
                 ORDER BY fecha DESC, id_venta DESC
             """
-            cursor.execute(consulta)
+            cursor.execute(consulta, (fecha_actual,))
             ventas = cursor.fetchall()
             
             self.table_widget.setRowCount(len(ventas))
@@ -556,7 +570,6 @@ class VentasWindow(QDialog):
             conexion.close()
             
         except Exception as e:
-            from PyQt6.QtWidgets import QMessageBox
             QMessageBox.critical(self, "Error", f"Error al cargar ventas: {str(e)}")
 
 
