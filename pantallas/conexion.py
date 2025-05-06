@@ -1003,3 +1003,31 @@ def eliminar_categoria(nombre):
         conexion.close()
     except Exception as e:
         raise Exception(f"Error al eliminar categoría: {str(e)}")
+
+def reducir_stock_producto(nombre_producto, cantidad):
+    """Reduce el stock de un producto después de una venta"""
+    try:
+        connection = conectar_db()
+        if connection:
+            cursor = connection.cursor()
+            
+            # Primero verificamos el stock actual
+            cursor.execute("SELECT Cantidad FROM Producto WHERE Nombre = %s", (nombre_producto,))
+            stock_actual = cursor.fetchone()
+            
+            if stock_actual and stock_actual[0] >= cantidad:
+                # Actualizamos el stock
+                nuevo_stock = stock_actual[0] - cantidad
+                cursor.execute(
+                    "UPDATE Producto SET Cantidad = %s WHERE Nombre = %s",
+                    (nuevo_stock, nombre_producto)
+                )
+                connection.commit()
+                return True
+            return False
+    except Exception as e:
+        print(f"Error al reducir stock: {e}")
+        return False
+    finally:
+        if connection:
+            connection.close()

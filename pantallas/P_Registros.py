@@ -318,6 +318,15 @@ class MainR(QMainWindow):
             
             # Obtener la fecha actual
             fecha_actual = datetime.now().date()
+            fecha_formateada = fecha_actual.strftime("%d/%m/%Y")
+            
+            # Obtener el usuario actual (si está disponible en alguna variable global o de sesión)
+            try:
+                # Fix the import path
+                from globals import get_current_user
+                responsable = get_current_user()
+            except (ImportError, AttributeError):
+                responsable = "Usuario del sistema"
             
             # Obtener las ventas solo del día actual
             cursor.execute("""
@@ -336,17 +345,81 @@ class MainR(QMainWindow):
                 return
             
             # Procesar datos para el reporte
-            total_ventas = sum(venta[1] for venta in ventas)
             total_dinero = sum(venta[2] for venta in ventas)
-            metodos_pago = list(set(venta[3] for venta in ventas))
-            productos = [f"{venta[0]}(x{venta[1]})" for venta in ventas]
+            total_tickets = len(set(venta[0] for venta in ventas))  # Aproximación de tickets
+            venta_promedio = total_dinero / total_tickets if total_tickets > 0 else 0
             
-            # Crear mensaje del reporte
-            datos_reporte = (
-                f"El dia de hoy {fecha_actual} se vendieron {total_ventas} productos "
-                f"({', '.join(productos)}) con un costo total de ${total_dinero:.2f} "
-                f"usando los metodos de pago {', '.join(metodos_pago)}"
-            )
+            # Agrupar por categoría/producto
+            productos_dict = {}
+            for venta in ventas:
+                producto, cantidad, precio, _ = venta
+                if producto not in productos_dict:
+                    productos_dict[producto] = {"cantidad": 0, "total": 0}
+                productos_dict[producto]["cantidad"] += cantidad
+                productos_dict[producto]["total"] += precio
+            
+            # Agrupar por forma de pago
+            pagos_dict = {}
+            for venta in ventas:
+                _, _, precio, forma_pago = venta
+                if forma_pago not in pagos_dict:
+                    pagos_dict[forma_pago] = 0
+                pagos_dict[forma_pago] += precio
+            
+            # Encabezado del reporte
+            datos_reporte = f"""Reporte de Ventas
+Fecha: {fecha_formateada}
+Responsable del reporte: {responsable}
+
+Resumen General
+Total de ventas: ${total_dinero:.2f}
+Número total de tickets: {total_tickets}
+Venta promedio por ticket: ${venta_promedio:.2f}
+
+"""
+            # Sección de ventas por categoría con formato mejorado
+            datos_reporte += "Ventas por Categoría\n"
+            # Definir anchos de columna
+            col_producto = 25  # Ancho para productos
+            col_cantidad = 15  # Ancho para cantidades
+            col_ingreso = 15   # Ancho para ingresos
+            
+            # Encabezados con formato fijo
+            datos_reporte += f"{'Producto':<{col_producto}}{'Unidades':<{col_cantidad}}{'Ingreso ($)'}\n"
+            datos_reporte += f"{'-'*col_producto}{'-'*col_cantidad}{'-'*15}\n"
+            
+            # Filas de productos con formato fijo
+            total_unidades = 0
+            for producto, datos in productos_dict.items():
+                # Truncar nombres de productos largos
+                if len(producto) > col_producto-3:
+                    prod_display = producto[:col_producto-3] + '...'
+                else:
+                    prod_display = producto
+                    
+                datos_reporte += f"{prod_display:<{col_producto}}{datos['cantidad']:<{col_cantidad}}${datos['total']:.2f}\n"
+                total_unidades += datos['cantidad']
+            
+            # Línea de total
+            datos_reporte += f"{'-'*col_producto}{'-'*col_cantidad}{'-'*15}\n"
+            datos_reporte += f"{'TOTAL':<{col_producto}}{total_unidades:<{col_cantidad}}${total_dinero:.2f}\n\n"
+            
+            # Sección de formas de pago con formato mejorado
+            datos_reporte += "Formas de Pago\n"
+            col_metodo = 25  # Ancho para método de pago
+            col_total = 15   # Ancho para el total
+            
+            # Encabezados
+            datos_reporte += f"{'Método':<{col_metodo}}{'Total ($)'}\n"
+            datos_reporte += f"{'-'*col_metodo}{'-'*15}\n"
+            
+            # Filas de formas de pago
+            for metodo, total in pagos_dict.items():
+                datos_reporte += f"{metodo:<{col_metodo}}${total:.2f}\n"
+            
+            # Línea de total
+            datos_reporte += f"{'-'*col_metodo}{'-'*15}\n"
+            datos_reporte += f"{'TOTAL':<{col_metodo}}${total_dinero:.2f}"
             
             # Insertar el reporte en la base de datos
             cursor.execute("""
@@ -365,16 +438,17 @@ class MainR(QMainWindow):
             # Recargar la tabla
             self.cargar_datos()
             
-            # Reemplazar QMessageBox con notificación de Windows
+            # Mostrar notificación
             self.toaster.show_toast(
                 "CAFESYS - Reporte Generado",
                 "El reporte de ventas ha sido generado correctamente",
-                icon_path="imagenes/CAFESYSNUEVO.png",  # Ruta al ícono de tu app
-                duration=5,  # Duración en segundos
-                threaded=True  # Permite que la app siga funcionando durante la notificación
+                icon_path="imagenes/CAFESYSNUEVO.png",
+                duration=5,
+                threaded=True
             )
             
         except Exception as e:
+            print(f"Error al generar reporte: {str(e)}")
             self.toaster.show_toast(
                 "CAFESYS - Error",
                 f"Error al generar reporte: {str(e)}",

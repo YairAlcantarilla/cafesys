@@ -9,6 +9,8 @@ from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QLineEdit,
 from PyQt6.QtGui import QPixmap, QImage
 from PyQt6.QtCore import Qt, QTimer
 from conexion import verificar_credenciales
+# Add import for set_current_user function
+from globals import set_current_user
 
 class LoginWindow(QWidget):
     def __init__(self):
@@ -87,6 +89,9 @@ class LoginWindow(QWidget):
         if resultado and len(resultado) == 3:
             id_usuario, nombre, id_puesto = resultado
             
+            # Set the current user name in globals
+            set_current_user(nombre)
+            
             try:
                 # Convertir id_puesto a entero para comparación
                 id_puesto = int(id_puesto)
@@ -164,6 +169,10 @@ class LoginWindow(QWidget):
         resultado = verificar_credenciales(usuario, contraseña)
         if resultado and len(resultado) == 3:
             id_usuario, nombre, id_puesto = resultado
+            
+            # Set the current user name in globals
+            set_current_user(nombre)
+            
             try:
                 id_puesto = int(id_puesto)
                 if id_puesto == 1:

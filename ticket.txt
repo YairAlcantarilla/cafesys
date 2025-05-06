@@ -1,20 +1,20 @@
 ========================================
 CAFESYS
 ========================================
-Fecha: 29/04/2025
+Fecha: 05/05/2025
 Cliente: Cliente General
 ----------------------------------------
 PRODUCTO          CANT    PRECIO    TOTAL
 ----------------------------------------
-Cafe Latte        8      $50.00 $400.00
-Panini            8      $85.00 $680.00
-Tartaleta de ki   8      $70.00 $560.00
+Cafe Mocca        1      $40.00  $40.00
+Tartaleta de ki   1      $70.00  $70.00
+Croissant         1      $40.00  $40.00
 ----------------------------------------
-Total Artículos: 24
-Total a Pagar: $1640.00
+Total Artículos: 3
+Total a Pagar: $150.00
 ----------------------------------------
-Efectivo Recibido: $2000.00
-Cambio: $360.00
+Efectivo Recibido: $200.00
+Cambio: $50.00
 ========================================
 ¡Gracias por su compra!
 ========================================

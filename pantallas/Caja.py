@@ -196,8 +196,26 @@ class CajaI(QMainWindow):
                     QMessageBox.warning(self, "Error", "El efectivo recibido es insuficiente")
                     return
 
+                # Verificar que todos los productos tengan stock suficiente antes de proceder
+                for producto in self.productos_temporales:
+                    nombre_producto = producto['producto']
+                    cantidad = producto['cantidad']
+                    stock_actual = conexion.obtener_stock_producto(nombre_producto)
+                    
+                    if stock_actual < cantidad:
+                        QMessageBox.warning(
+                            self, 
+                            "Error de Stock", 
+                            f"Stock insuficiente para {nombre_producto}. Solo quedan {stock_actual} unidades disponibles."
+                        )
+                        return
+
                 self.guardar_venta(forma_pago='Efectivo')
                 total_venta = self.generar_ticket()
+                
+                # Reducir el stock de los productos vendidos
+                for producto in self.productos_temporales:
+                    conexion.reducir_stock_producto(producto['producto'], producto['cantidad'])
                 
                 if total_venta > 0:
                     cambio = float(self.cambio_calculado)
@@ -260,6 +278,16 @@ class CajaI(QMainWindow):
         self.total_label.setText("Total a pagar: $0.00")
 
     def agregar_producto_temporal(self, producto, fecha, cantidad, precio_total):
+        # Verificar el stock antes de agregar al carrito
+        stock_actual = conexion.obtener_stock_producto(producto)
+        if stock_actual < cantidad:
+            QMessageBox.warning(
+                self, 
+                "Error de Stock", 
+                f"Stock insuficiente para {producto}. Solo quedan {stock_actual} unidades disponibles."
+            )
+            return False
+            
         # Verificar si hay descuento activo
         producto_id = conexion.obtener_producto_id(producto)
         if producto_id:
@@ -326,6 +354,7 @@ class CajaI(QMainWindow):
         
         # Actualizar el total
         self.actualizar_total()
+        return True
 
     def eliminar_fila(self, row):
         """Elimina una fila específica de la tabla y de la lista de productos temporales"""
@@ -417,28 +446,32 @@ class CajaI(QMainWindow):
             return 0.0
 
     def borrar_producto(self):
-        """Borra el producto seleccionado de la tabla y de la lista temporal"""
-        filas_seleccionadas = self.table.selectedIndexes()
-        if not filas_seleccionadas:
-            QMessageBox.warning(self, "Aviso", "Por favor seleccione un producto para borrar")
+        """Borra todos los productos de la tabla y reinicia la venta"""
+        if not self.productos_temporales:
+            QMessageBox.information(self, "Información", "No hay productos para borrar")
             return
 
-        # Obtener índices únicos de las filas seleccionadas
-        filas_unicas = set(index.row() for index in filas_seleccionadas)
-        
         # Confirmar la eliminación
         respuesta = QMessageBox.question(
             self,
-            "Confirmar eliminación",
-            f"¿Está seguro de eliminar {len(filas_unicas)} producto(s)?",
+            "Reiniciar venta",
+            f"¿Está seguro de eliminar TODOS los productos y reiniciar la venta?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         
         if respuesta == QMessageBox.StandardButton.Yes:
-            # Borrar desde el último índice para no afectar los índices anteriores
-            for fila in sorted(filas_unicas, reverse=True):
-                del self.productos_temporales[fila]
-                self.table.removeRow(fila)
+            self.limpiar_tabla()
+            QMessageBox.information(self, "Venta reiniciada", "Se han eliminado todos los productos")
+            
+            # Si hay una ventana de pago abierta, cerrarla
+            if hasattr(self, 'pago_efectivo_window'):
+                self.pago_efectivo_window.close()
+                
+            # Eliminar variables de efectivo si existen
+            if hasattr(self, 'efectivo_recibido'):
+                delattr(self, 'efectivo_recibido')
+            if hasattr(self, 'cambio_calculado'):
+                delattr(self, 'cambio_calculado')
 
     def actualizar_total(self):
         """Actualiza el total a pagar en el label"""
@@ -710,8 +743,8 @@ class VentanaBebidas(QMainWindow):
 class VentanaComida(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Seleccionar Comida")
-        self.setFixedSize(400, 200)
+        self.setWindowTitle("Seleccionar Alimentos")
+        self.setFixedSize(400, 220)
         
         # Crear widget central
         central_widget = QWidget()
@@ -762,7 +795,7 @@ class VentanaComida(QMainWindow):
             }
         """)
         
-        layout.addWidget(QLabel("Seleccionar Comida:"))
+        layout.addWidget(QLabel("Seleccionar Alimento:"))
         layout.addWidget(self.comida_combo)
         layout.addWidget(QLabel("Cantidad:"))
         layout.addWidget(self.cantidad_spin)
@@ -779,50 +812,71 @@ class VentanaComida(QMainWindow):
                 raise Exception("No se pudo establecer conexión con la base de datos")
                 
             cursor = connection.cursor()
-            cursor.execute("SELECT Nombre FROM Producto WHERE Categoria = 'Comida'")
-            comidas = cursor.fetchall()
+            # Modificado para mostrar todas las categorías excepto Bebidas
+            cursor.execute("SELECT Nombre, Categoria FROM Producto WHERE Categoria != 'Bebidas' ORDER BY Categoria, Nombre")
+            productos = cursor.fetchall()
             
-            if comidas:
-                self.comida_combo.addItems([comida[0] for comida in comidas])
+            if productos:
+                # Creamos un diccionario para agrupar por categorías
+                productos_por_categoria = {}
+                for nombre, categoria in productos:
+                    # Filtrar productos con nombre igual a su categoría
+                    if nombre != categoria:
+                        if categoria not in productos_por_categoria:
+                            productos_por_categoria[categoria] = []
+                        productos_por_categoria[categoria].append(nombre)
+                
+                # Añadimos todos los productos con formato "Nombre (Categoría)"
+                for categoria, nombres in productos_por_categoria.items():
+                    for nombre in nombres:
+                        self.comida_combo.addItem(f"{nombre} ({categoria})")
             else:
-                QMessageBox.warning(self, "Aviso", "No hay comidas disponibles")
+                QMessageBox.warning(self, "Aviso", "No hay alimentos disponibles")
                 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error al cargar comidas: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Error al cargar alimentos: {str(e)}")
         finally:
             if connection:
                 connection.close()
 
-    def actualizar_stock_disponible(self, comida):
-        if comida:
-            stock = conexion.obtener_stock_producto(comida)
-            self.cantidad_spin.setMaximum(stock)
-            if stock == 0:
-                self.agregar_btn.setEnabled(False)
-                QMessageBox.warning(self, "Sin Stock", f"No hay stock disponible de {comida}")
-            else:
-                self.agregar_btn.setEnabled(True)
+    def actualizar_stock_disponible(self, producto_completo):
+        if not producto_completo:
+            return
+            
+        # Extraer solo el nombre del producto (sin la categoría)
+        nombre_producto = producto_completo.split(" (")[0] if " (" in producto_completo else producto_completo
+        
+        stock = conexion.obtener_stock_producto(nombre_producto)
+        self.cantidad_spin.setMaximum(stock)
+        if stock == 0:
+            self.agregar_btn.setEnabled(False)
+            QMessageBox.warning(self, "Sin Stock", f"No hay stock disponible de {nombre_producto}")
+        else:
+            self.agregar_btn.setEnabled(True)
 
     def agregar_comida(self):
-        comida = self.comida_combo.currentText()
+        producto_completo = self.comida_combo.currentText()
         
-        if comida == "Comida" or not comida:
+        if not producto_completo:
             QMessageBox.warning(self, "Error", "Por favor seleccione un producto")
             return
             
+        # Extraer solo el nombre del producto (sin la categoría)
+        nombre_producto = producto_completo.split(" (")[0] if " (" in producto_completo else producto_completo
+        
         cantidad = self.cantidad_spin.value()
-        stock_actual = conexion.obtener_stock_producto(comida)
+        stock_actual = conexion.obtener_stock_producto(nombre_producto)
         
         if stock_actual < cantidad:
             QMessageBox.warning(self, "Error", f"Stock insuficiente. Solo hay {stock_actual} unidades disponibles")
             return
             
-        precio = conexion.obtener_precio_producto(comida)
+        precio = conexion.obtener_precio_producto(nombre_producto)
         
         if precio is not None:
             precio_total = precio * cantidad
             fecha_actual = QDate.currentDate().toString("yyyy-MM-dd")
-            self.parent().agregar_producto_temporal(comida, fecha_actual, cantidad, precio_total)
+            self.parent().agregar_producto_temporal(nombre_producto, fecha_actual, cantidad, precio_total)
             self.close()
 
 #########################################################################################################
