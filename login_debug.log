@@ -1,0 +1,5 @@
+Iniciando login con usuario: 250103
+Verificando credenciales para: 250103
+Resultado verificación: (250103, 'Miri', 1)
+Usuario autenticado: Miri, id_puesto: 1
+Iniciando ventana de administrador...

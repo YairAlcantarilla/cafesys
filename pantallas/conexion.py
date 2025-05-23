@@ -1,4 +1,4 @@
-import mysql.connector
+import pymysql
 from PyQt6.QtWidgets import QMessageBox
 import qrcode
 import os
@@ -9,7 +9,7 @@ def obtener_credenciales_db():
     return {
         'host': "localhost",
         'user': "root",
-        'passwd': "894388",
+        'password': "895488",  # pymysql usa 'password' en lugar de 'passwd'
         'database': "tienda"
     }
 
@@ -17,15 +17,22 @@ def obtener_credenciales_db():
 def conectar_db():
     try:
         credenciales = obtener_credenciales_db()
-        conexion = mysql.connector.connect(
+        print(f"Intentando conectar a: {credenciales['host']} con usuario: {credenciales['user']}")
+        
+        conexion = pymysql.connect(
             host=credenciales['host'],
             user=credenciales['user'],
-            passwd=credenciales['passwd'],
-            database=credenciales['database']
+            password=credenciales['password'],
+            database=credenciales['database'],
+            connect_timeout=5
         )
+        print("Conexión exitosa")
         return conexion
-    except mysql.connector.Error as e:
-        QMessageBox.information("Error", f"No se pudo conectar a la base de datos:{e}")
+    except Exception as e:
+        error_msg = f"Error de conexión: {str(e)}"
+        print(error_msg)
+        with open("db_error.log", "w") as f:
+            f.write(error_msg)
         return None
         
 #Funcion para insertar en bd
@@ -61,7 +68,7 @@ def modificar_dato(tabla, columna_id, valor_id, dato_nuevo):
         set_clause = ",".join([f"{col} = %s" for col in dato_nuevo.keys()])
         sql = f"UPDATE {tabla} SET {set_clause} WHERE {columna_id} = %s"
         valores=list(dato_nuevo.values())+[valor_id]
-        cursor.execute()
+        cursor.execute(sql, valores)
         conexion.commit()
         cursor.close()
         
@@ -482,14 +489,14 @@ def ocultar_combo(nombre_combo):
             cursor.close()
             conexion.close()
 
-from mysql.connector import Error  # Asegúrate de importar Error correctamente
+from pymysql import Error  # Asegúrate de importar Error correctamente
 
 
 def eliminar_combo(nombre_combo):
     try:
         conexion = conectar_db()
         cursor = conexion.cursor()
-        if conexion.is_connected():
+        if conexion.open:
             # Verifica si el combo existe antes de intentar eliminarlo
             check_query = "SELECT COUNT(*) FROM combos WHERE Nombre = %s"
             cursor.execute(check_query, (nombre_combo,))
@@ -515,7 +522,7 @@ def eliminar_combo(nombre_combo):
         print(f"Error al eliminar combo: {e}")
         raise Exception(f"Error al eliminar combo: {e}")
     finally:
-        if conexion and conexion.is_connected():
+        if conexion and conexion.open:
             cursor.close()
             conexion.close()
 
