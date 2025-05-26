@@ -77,39 +77,71 @@ class LoginWindow(QWidget):
         self.timer.timeout.connect(self.update_frame)
 
     def check_login(self):
-        usuario = self.user_input.text()
-        contraseña = self.pass_input.text()
+        try:
+            # Crear archivo de registro para depuración
+            with open("login_debug.log", "w") as f:
+                f.write(f"Iniciando login con usuario: {self.user_input.text()}\n")
+                
+            usuario = self.user_input.text()
+            contraseña = self.pass_input.text()
 
-        if not usuario or not contraseña:
-            QMessageBox.warning(self, "Error", "Por favor ingrese usuario y contraseña")
-            return
+            if not usuario or not contraseña:
+                QMessageBox.warning(self, "Error", "Por favor ingrese usuario y contraseña")
+                return
 
-        resultado = verificar_credenciales(usuario, contraseña)
-
-        if resultado and len(resultado) == 3:
-            id_usuario, nombre, id_puesto = resultado
+            # Registra intentos de verificación
+            with open("login_debug.log", "a") as f:
+                f.write(f"Verificando credenciales para: {usuario}\n")
+                
+            resultado = verificar_credenciales(usuario, contraseña)
             
-            # Set the current user name in globals
-            set_current_user(nombre)
+            with open("login_debug.log", "a") as f:
+                f.write(f"Resultado verificación: {resultado}\n")
             
-            try:
-                # Convertir id_puesto a entero para comparación
-                id_puesto = int(id_puesto)
+            if resultado and len(resultado) == 3:
+                id_usuario, nombre, id_puesto = resultado
                 
-                if id_puesto == 1:  # Administrador
-                    self.main_window = p_inicio.MainWindow()
-                    self.main_window.show()
-                else:  # Cualquier otro ID irá a Caja
-                    self.main_window = Caja.CajaI()
-                    self.main_window.show()
+                # Set the current user
+                from globals import set_current_user
+                set_current_user(nombre)
                 
-                self.close()
+                # Registra el tipo de usuario
+                with open("login_debug.log", "a") as f:
+                    f.write(f"Usuario autenticado: {nombre}, id_puesto: {id_puesto}\n")
                 
-            except ValueError as e:
-                print(f"Error al convertir ID_Puesto: {e}")
-                QMessageBox.warning(self, "Error", "Error en el tipo de usuario")
-        else:
-            QMessageBox.warning(self, "Acceso denegado", "Usuario o contraseña incorrectos")
+                try:
+                    # Convertir id_puesto a entero para comparación
+                    id_puesto = int(id_puesto) if id_puesto is not None else 0
+                    
+                    if id_puesto == 1:  # Administrador
+                        with open("login_debug.log", "a") as f:
+                            f.write(f"Iniciando ventana de administrador...\n")
+                        # Importa aquí para evitar problemas de importación circular
+                        import p_inicio
+                        self.main_window = p_inicio.MainWindow()
+                        self.main_window.show()
+                    else:  # Cualquier otro ID irá a Caja
+                        with open("login_debug.log", "a") as f:
+                            f.write(f"Iniciando ventana de caja...\n")
+                        import Caja
+                        self.main_window = Caja.CajaI()
+                        self.main_window.show()
+                    
+                    self.close()
+                except Exception as e:
+                    import traceback
+                    with open("login_debug.log", "a") as f:
+                        f.write(f"ERROR CRÍTICO: {str(e)}\n")
+                        f.write(traceback.format_exc())
+                    QMessageBox.critical(self, "Error", f"Error al iniciar ventana: {str(e)}")
+            else:
+                QMessageBox.warning(self, "Acceso denegado", "Usuario o contraseña incorrectos")
+        except Exception as e:
+            import traceback
+            with open("login_debug.log", "a") as f:
+                f.write(f"ERROR GENERAL: {str(e)}\n")
+                f.write(traceback.format_exc())
+            QMessageBox.critical(self, "Error", f"Error de inicio de sesión: {str(e)}")
 
     def open_qr_scanner(self):
         if not self.camera:
@@ -166,27 +198,42 @@ class LoginWindow(QWidget):
             self.camera_label.setPixmap(pixmap.scaled(380, 380, Qt.AspectRatioMode.KeepAspectRatio))
 
     def do_login(self, usuario, contraseña):
-        resultado = verificar_credenciales(usuario, contraseña)
-        if resultado and len(resultado) == 3:
-            id_usuario, nombre, id_puesto = resultado
+        try:
+            resultado = verificar_credenciales(usuario, contraseña)
             
-            # Set the current user name in globals
-            set_current_user(nombre)
-            
-            try:
-                id_puesto = int(id_puesto)
-                if id_puesto == 1:
+            if resultado and len(resultado) == 3:
+                id_usuario, nombre, id_puesto = resultado
+                
+                # Establecer el usuario actual
+                from globals import set_current_user
+                set_current_user(nombre)
+                
+                # Convertir id_puesto a entero para comparación
+                id_puesto = int(id_puesto) if id_puesto is not None else 0
+                
+                if id_puesto == 1:  # Administrador
+                    import p_inicio
                     self.main_window = p_inicio.MainWindow()
                     self.main_window.show()
-                else:
+                else:  # Cualquier otro ID irá a Caja
+                    import Caja
                     self.main_window = Caja.CajaI()
                     self.main_window.show()
+                
+                # Cerrar la cámara si está activa
+                if self.camera:
+                    self.camera.release()
+                    self.timer.stop()
+                    
                 self.close()
-            except ValueError as e:
-                print(f"Error al convertir ID_Puesto: {e}")
-                QMessageBox.warning(self, "Error", "Error en el tipo de usuario")
-        else:
-            QMessageBox.warning(self, "Acceso denegado", "Código QR inválido")
+                return True
+            else:
+                QMessageBox.warning(self, "Acceso denegado", "Credenciales QR inválidas")
+                return False
+        except Exception as e:
+            print(f"Error en do_login: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Error al iniciar sesión: {str(e)}")
+            return False
 
     def closeEvent(self, event):
         if self.camera:

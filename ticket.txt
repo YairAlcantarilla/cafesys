@@ -1,19 +1,20 @@
 ========================================
 CAFESYS
 ========================================
-Fecha: 25/05/2025
+Fecha: 05/05/2025
 Cliente: Cliente General
 ----------------------------------------
 PRODUCTO          CANT    PRECIO    TOTAL
 ----------------------------------------
-Capuccino         2      $30.00  $60.00
-Croissant         4      $40.00 $160.00
+Cafe Mocca        1      $40.00  $40.00
+Tartaleta de ki   1      $70.00  $70.00
+Croissant         1      $40.00  $40.00
 ----------------------------------------
-Total Artículos: 6
-Total a Pagar: $220.00
+Total Artículos: 3
+Total a Pagar: $150.00
 ----------------------------------------
-Efectivo Recibido: $240.00
-Cambio: $20.00
+Efectivo Recibido: $200.00
+Cambio: $50.00
 ========================================
 ¡Gracias por su compra!
 ========================================

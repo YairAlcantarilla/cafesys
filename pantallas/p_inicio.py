@@ -1,5 +1,6 @@
 import p_producto
 import Caja
+import login 
 import personal
 import main_p
 import p_inventario
@@ -8,6 +9,7 @@ import sys
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton
+ 
 
 
 class MainWindow(QMainWindow):
@@ -91,6 +93,9 @@ class MainWindow(QMainWindow):
             self.main_window.show()
             self.close()
         elif button.text() == "Salir":
+            # Crear y mostrar la ventana de login
+            self.login_window = login.LoginWindow()
+            self.login_window.show()
             self.close()
 
 
